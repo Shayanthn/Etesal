@@ -1,0 +1,48 @@
+name: Deploy Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cloudflare-workers/**'
+      - 'workflows/cloudflare-worker/**'
+      - '.github/workflows/deploy-workers.yml'
+  workflow_dispatch: # امکان اجرای دستی پایپ‌لاین
+
+jobs:
+  deploy-sitemap:
+    runs-on: ubuntu-latest
+    name: Deploy Sitemap Worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Sitemap Worker to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'cloudflare-workers'
+          secrets: |
+            SUPABASE_URL
+            SUPABASE_ANON_KEY
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+  deploy-validator:
+    runs-on: ubuntu-latest
+    name: Deploy Validator Worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Validator Worker to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'workflows/cloudflare-worker'
+          secrets: |
+            TELEGRAM_WEBHOOK_SECRET
+            TELEGRAM_BOT_TOKEN
+        env:
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

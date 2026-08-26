@@ -1,20 +1,11 @@
 /**
- * Etesal Hub - Dynamic Sitemap Generator (Cloudflare Worker)
- * 
- * This worker intercepts requests to `/sitemap.xml`, connects to your 
- * Supabase database securely via the REST API, fetches all published 
- * articles and news, and generates an up-to-date XML sitemap on the fly.
- * 
- * Environment Variables Required in Cloudflare Worker settings:
- * - SUPABASE_URL: Your Supabase Project URL (e.g. https://xyz.supabase.co)
- * - SUPABASE_ANON_KEY: Your Supabase public anon key
+ * Etesal Hub - Dynamic & Real-time Sitemap Generator (Production Grade)
  */
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // Only respond to /sitemap.xml
     if (url.pathname !== '/sitemap.xml') {
       return new Response('Not Found', { status: 404 });
     }
@@ -32,43 +23,44 @@ export default {
     };
 
     try {
-      // Fetch Published Articles
-      const articlesResponse = await fetch(`${SUPABASE_URL}/rest/v1/articles?is_published=eq.true&select=slug,updated_at`, { headers });
+      // دریافت مقالات منتشرشده به صورت واقعی
+      const articlesResponse = await fetch(`${SUPABASE_URL}/rest/v1/articles?is_published=eq.true&select=slug,updated_at&order=updated_at.desc&limit=500`, { headers });
       const articles = articlesResponse.ok ? await articlesResponse.json() : [];
 
-      // Fetch Published News
-      const newsResponse = await fetch(`${SUPABASE_URL}/rest/v1/news?is_published=eq.true&select=slug,updated_at`, { headers });
+      // دریافت اخبار منتشرشده به صورت واقعی
+      const newsResponse = await fetch(`${SUPABASE_URL}/rest/v1/news?is_published=eq.true&select=slug,updated_at&order=updated_at.desc&limit=500`, { headers });
       const news = newsResponse.ok ? await newsResponse.json() : [];
 
-      // Generate XML
-      const baseUrl = 'https://etesal.aeherai.ir'; // Your production domain
+      const baseUrl = env.BASE_URL || 'https://etesal.aetherai.ir';
+      const latestUpdate = articles[0]?.updated_at?.split('T')[0] || new Date().toISOString().split('T')[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-      // 1. Static Home Page
+      // صفحه اصلی با آخرین تاریخ بهروزرسانی واقعی محتوا
       xml += `  <url>\n`;
       xml += `    <loc>${baseUrl}/</loc>\n`;
+      xml += `    <lastmod>${latestUpdate}</lastmod>\n`;
       xml += `    <changefreq>daily</changefreq>\n`;
       xml += `    <priority>1.0</priority>\n`;
       xml += `  </url>\n`;
 
-      // 2. Dynamic Articles
+      // لیست مقالات واقعی
       articles.forEach(article => {
-        const lastMod = article.updated_at ? article.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
+        const lastMod = article.updated_at ? article.updated_at.split('T')[0] : latestUpdate;
         xml += `  <url>\n`;
-        xml += `    <loc>${baseUrl}/article/${article.slug}</loc>\n`;
+        xml += `    <loc>${baseUrl}/article/${encodeURIComponent(article.slug)}</loc>\n`;
         xml += `    <lastmod>${lastMod}</lastmod>\n`;
         xml += `    <changefreq>weekly</changefreq>\n`;
         xml += `    <priority>0.8</priority>\n`;
         xml += `  </url>\n`;
       });
 
-      // 3. Dynamic News
+      // لیست اخبار واقعی
       news.forEach(newsItem => {
-        const lastMod = newsItem.updated_at ? newsItem.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
+        const lastMod = newsItem.updated_at ? newsItem.updated_at.split('T')[0] : latestUpdate;
         xml += `  <url>\n`;
-        xml += `    <loc>${baseUrl}/news/${newsItem.slug}</loc>\n`;
+        xml += `    <loc>${baseUrl}/news/${encodeURIComponent(newsItem.slug)}</loc>\n`;
         xml += `    <lastmod>${lastMod}</lastmod>\n`;
         xml += `    <changefreq>daily</changefreq>\n`;
         xml += `    <priority>0.7</priority>\n`;
@@ -77,18 +69,16 @@ export default {
 
       xml += `</urlset>`;
 
-      // Return the XML with correct Content-Type so Google recognizes it
       return new Response(xml, {
         status: 200,
         headers: {
-          'Content-Type': 'application/xml',
-          'Cache-Control': 'public, max-age=3600' // Cache for 1 hour to reduce DB load
+          'Content-Type': 'application/xml; charset=utf-8',
+          'Cache-Control': 'public, max-age=1800' // کش هوشمند ۳۰ دقیقهای
         }
       });
       
     } catch (error) {
-      console.error('Error generating sitemap:', error);
-      return new Response('Error generating sitemap', { status: 500 });
+      return new Response('Error generating dynamic sitemap', { status: 500 });
     }
   }
 };

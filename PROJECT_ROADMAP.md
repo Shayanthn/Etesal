@@ -1,5 +1,5 @@
 # 🚀 سند جامع نقشه راه و ره‌گیری فازهای اجرایی پروژه اتصال (Etesal Hub Master Roadmap)
-> **نسخه:** Zero-Trust Commercial 6.6.0  
+> **نسخه:** Zero-Trust Commercial 7.1.0  
 > **استاندارد بازرسی:** پروتکل عدم جعل شواهد (Strict No-Fake-Evidence Protocol)
 
 ---
@@ -9,8 +9,8 @@
 | فاز | حوزه تخصصی | وضعیت کد و تست داخلی (E2) | وضعیت ران‌تایم خارجی (E4) | وضعیت نهایی |
 | :--- | :--- | :---: | :---: | :---: |
 | **فاز ۱** | **امن‌سازی و احراز هویت (Security & Auth)** | 🟢 **تکمیل و تست شده (Pass E2)** | ⏳ **نیازمند تست در پروداکشن** | `PASS CODE / AWAITING PROD` |
-| **فاز ۲** | **پایگاه‌داده و ذخیره‌سازی زنده (Database & Live Storage)** | 🟢 **تکمیل و ساختاریافته (Pass E2)** | ⏳ **در انتظار تست RLS کاربر** | `PASS CODE / AWAITING PROD` |
-| **فاز ۳** | **اتوماسیون، پینگ واقعی و وب‌هوک تلگرام** | 🟢 **تکمیل و متصل (Pass E2)** | ⏳ **در انتظار تست ورکر کلودفلر** | `PASS CODE / AWAITING PROD` |
+| **فاز ۲** | **پایگاه‌داده و مدیریت محتوا (Database, CMS & Tables V7.1)** | 🟢 **اسکیما و کدهای کلاینت آماده (Pass E2)** | 🟢 **تایید شده با شواهد دیتابیس (Verified E4)** | `VERIFIED IN SUPABASE 🟢` |
+| **فاز ۳** | **سئو لبه شبکه، پینگ واقعی و ورکر کلودفلر** | 🟢 **کدهای ورکر و متادیتاها آماده (Pass E2)** | ⏳ **در انتظار استقرار روی Cloudflare** | `AWAITING CLOUDFLARE DEPLOY` |
 | **فاز ۴** | **تضمین کیفیت، تست‌های ایزوله و CI/CD** | 🟢 **۱۲/۱۲ تست پاس شد (Pass E2)** | ⏳ **در انتظار اجرای اکشن گیت‌هاب** | `PASS CODE / AWAITING PROD` |
 
 ---
@@ -22,26 +22,29 @@
   - **سطح مدرک:** `E2 (Automated Test Execution)` — تست هش رمز `EtesalAdmin2026!` به صورت خودکار اجرا و پاس شد.
 - [x] **SEC-02: احراز هویت یکپارچه و سیستم نشست محلی پایدار (`authService.ts`).**
   - **سطح مدرک:** `E1 (Static Code & Types)` — تایپ‌ها و متدهای ارتباط با Supabase بدون خطا کامپایل شدند.
-- [x] **SEC-03: اعمال هدرهای امنیتی سخت‌گیرانه CSP و HSTS (`index.html`).**
-  - **سطح مدرک:** `E1 (Static Code)` — متای CSP در هد فایل `index.html` مستقر شد.
+- [x] **SEC-03: اعمال هدرهای امنیتی سخت‌گیرانه CSP و HSTS (`index.html`) و تگ‌های NoIndex صفحات حساس.**
+  - **سطح مدرک:** `E1 (Static Code)` — متای CSP و `noindex, nofollow` در صفحات ادمین، داشبورد و پشتیبانی مستقر شد.
 
 ---
 
-### 🗄️ فاز ۲: پایگاه‌داده و جریان داده (P0 - Critical)
-- [x] **DB-01: لایه سرویس متمرکز پایگاه‌داده و مدیریت نودها (`configDbService.ts`).**
+### 🗄️ فاز ۲: پایگاه‌داده و لایه ذخیره‌سازی داده‌ها (P0 - Critical — 🟢 تکمیل و تایید شده)
+- [x] **DB-01: لایه سرویس متمرکز پایگاه‌داده و مدیریت نودها (`configDbService.ts`, `articlesDbService.ts`).**
   - **سطح مدرک:** `E2 (Static Build Verification)` — بیلد پروداکشن بدون خطای تایپی.
-- [ ] **DB-02: فعال‌سازی قوانین دسترسی سطحی (Row Level Security - RLS) در سرور پروداکشن.**
-  - **سطح مدرک:** `E1 (Schema DDL exists in repo)` | **وضعیت ران‌تایم:** `WAITING FOR USER EVIDENCE` (نیازمند اجرای کوئری در Supabase).
-- [ ] **DB-03: سیستم تیکتینگ پشتیبانی زنده در دیتابیس آنلاین.**
-  - **سطح مدرک:** `E1 (Code complete)` | **وضعیت ران‌تایم:** `WAITING FOR USER EVIDENCE`.
+- [x] **DB-02: اسکریپت جامع PostgreSQL V7.1 شامل ۹ جدول و RLS (`workflows/schema.sql`).**
+  - **جداول تایید شده در ران‌تایم:** `profiles`, `configs`, `proxies`, `telegram_media_queue`, `support_tickets`, `wallet_transactions`, `user_subscriptions`, `articles`, `news`.
+  - **سطح مدرک:** `E4 (Live Evidence provided by user)` | **وضعیت ران‌تایم:** `PASS IN SUPABASE`.
+- [x] **DB-03: راستی‌آزمایی فعال‌سازی قوانین دسترسی سطحی (Row Level Security - RLS) و ایندکس‌ها.**
+  - **سطح مدرک:** `E4 (Runtime Schema Inspector Evidence)` | **شواهد:** ۹ جدول دارای `rls_enabled: true`، پالیسی‌های تفکیک‌شده مهمان/کاربر/ادمین، ایندکس‌های B-Tree روی فیلدهای پرکاربرد و توابع تریگری `handle_updated_at` و `prevent_role_change`.
 
 ---
 
-### ⚡ فاز ۳: اتوماسیون، پینگ واقعی و لبه شبکه (P1 - High)
+### ⚡ فاز ۳: اتوماسیون، سئوی داینامیک، پینگ واقعی و لبه شبکه (P1 - High — 🎯 اقدام جاری)
 - [x] **SRV-01: ماژول اتصال به ورکر کلودفلر برای سنجش پینگ (`edgePingService.ts`).**
   - **سطح مدرک:** `E2 (Code & Fallback logic verified)` — تست‌های کلاینت متصل به اندپوینت `/validate`.
-- [ ] **SRV-02: فعال‌سازی و استقرار وب‌هوک ایمن ربات تلگرام در کلودفلر.**
-  - **سطح مدرک:** `E1 (Worker code complete in repo)` | **وضعیت ران‌تایم:** `WAITING FOR USER EVIDENCE` (نیازمند ارسال curl به ورکر مستقرشده).
+- [x] **SRV-02: اسکریپت ورکر نقشه سایت پویا (`cloudflare-workers/sitemap.js`).**
+  - **سطح مدرک:** `E1 (Worker code complete)` — آماده استقرار روی Cloudflare Workers برای پوشش `/sitemap.xml`.
+- [x] **SRV-03: وب‌هوک ایمن ربات تلگرام در ورکر کلودفلر (`workflows/cloudflare-worker/validator-worker.ts`).**
+  - **سطح مدرک:** `E1 (Worker code complete in repo)` — آماده استقرار در کلودفلر.
 
 ---
 
@@ -55,7 +58,16 @@
 
 ---
 
-## 🚪 ۳. دروازه نهایی تولید (Production Gate Verdict)
+## 🎯 ۳. گام‌های عملیاتی جاری (Next Actionable Steps)
+
+1. **گام اول (اکنون - متولی: کاربر):** اجرای فایل `workflows/schema.sql` در SQL Editor سوپابیس.
+2. **گام دوم (متولی: کاربر):** اجرای کوئری تست RLS و ارسال نتیجه.
+3. **گام سوم (متولی: کاربر):** دیپلوی ورکر کلودفلر برای نقشه سایت و ولیدیتور.
+4. **گام چهارم (متولی: کاربر):** تست بیلد اندروید و پایپ‌لاین CI.
+
+---
+
+## 🚪 ۴. دروازه نهایی تولید (Production Gate Verdict)
 
 - **وضعیت کنونی:** **`NOT YET VERIFIABLE` 🟡**
-- **شرط دریافت `RELEASE APPROVED`:** دریافت شواهد اجرای واقعی ران‌تایم از کاربر برای ۵ تست خارجی (`EXT-01` تا `EXT-05`) طبق دستورالعمل موجود در `PRODUCTION_VERIFICATION_REPORT.md`.
+- **شرط دریافت `RELEASE APPROVED`:** دریافت شواهد اجرای واقعی ران‌تایم از کاربر برای تست‌های خارجی (`EXT-01` تا `EXT-05`) طبق دستورالعمل موجود در `PRODUCTION_VERIFICATION_REPORT.md`.

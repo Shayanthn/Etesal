@@ -1,0 +1,12 @@
+name = "etesal-validator"
+main = "validator-worker.ts"
+compatibility_date = "2023-07-01"
+
+# این ورکر تمام درخواست‌های مسیر API را هندل می‌کند
+routes = [
+  { pattern = "etesal.aetherai.ir/api/*", zone_name = "aetherai.ir" }
+]
+
+# متغیرهای غیرمحرمانه
+[vars]
+ALLOWED_ORIGIN = "https://etesal.aetherai.ir"

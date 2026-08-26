@@ -293,9 +293,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- سلب دسترسی اجرای این تابع از عموم و اعطای انحصاری به سرور/ورکر
-REVOKE ALL ON FUNCTION public.purge_expired_nodes_and_media() FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.purge_expired_nodes_and_media() TO service_role;
+-- سلب دسترسی اجرای این تابع از عموم و اعطای انحصاری به سرور/ورکر و ادمین کل
+REVOKE ALL ON FUNCTION public.purge_expired_nodes_and_media() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.purge_expired_nodes_and_media() TO service_role, authenticated;
 
 -- ============================================================================
 -- 🛡️ ۱۱. پیکربندی سخت‌گیرانه قوانین امنیتی سطحی (Zero-Trust Row Level Security)

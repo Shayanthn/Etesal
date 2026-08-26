@@ -1,7 +1,7 @@
 # 🤝 سند تفکیک مسئولیت‌ها و اقدامات اجرایی تا پروداکشن نهایی
 # (Execution & Verification Matrix: AI vs. User Responsibilities)
 
-> **پروژه:** هاب هوشمند اتصال (Etesal Hub) — نسخه Commercial-Grade 6.6.0  
+> **پروژه:** هاب هوشمند اتصال (Etesal Hub) — نسخه Commercial-Grade 7.1.0  
 > **استاندارد بازرسی:** پروتکل سخت‌گیرانه عدم جعل شواهد (Strict Zero-Trust & Evidence Protocol)  
 > **هدف سند:** تفکیک دقیق و فازبندی‌شده وظایف کلاینت/کدبیس (بر عهده AI) و وظایف زیرساخت ابری و دیپلوی (بر عهده کاربر/مالک سیستم).
 
@@ -22,9 +22,9 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                    کارهای تکمیل‌شده توسط AI در کدبیس (100% DONE)             │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 🛡️ فاز ۱ (امنیت): گیت ادمین با SHA-256، روت‌گارد، CSP، حذف پسوردهای هاردکد     │
-│ 🗄️ فاز ۲ (دیتابیس): سرویس تیکت، سرویس ذخیره نودها، ساختار DDL و RLS در SQL   │
-│ ⚡ فاز ۳ (لبه شبکه): سرویس پینگ واقعی کلاینت، اسکریپت ورکر کلودفلر V6.3.0    │
+│ 🛡️ فاز ۱ (امنیت): گیت ادمین با SHA-256، روت‌گارد، CSP، NoIndex صفحات حساس   │
+│ 🗄️ فاز ۲ (دیتابیس): سرویس تیکت، مدیریت نودها، سیستم مقالات/سئو و SQL V7.1    │
+│ ⚡ فاز ۳ (لبه شبکه): سرویس پینگ کلاینت، ورکر نقشه سایت XML و وب‌هوک تلگرام │
 │ 🧪 فاز ۴ (کنترل کیفیت): ۱۲ یونیت‌تست ایزوله، پایپ‌لاین CI و بیلد APK در گیت‌هاب│
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -33,12 +33,13 @@
 | :---: | :---: | :--- | :--- | :---: | :---: |
 | **فاز ۱** | `SEC-01` | پیاده‌سازی گیت امنیتی ادمین با الگوریتم استاندارد WebCrypto SHA-256 و انقضای ۴ ساعته | `src/services/adminSecurityService.ts`<br>`src/components/auth/AdminRouteGuard.tsx` | **E2** | ✅ `PASS` |
 | **فاز ۱** | `SEC-02` | لایه احراز هویت یکپارچه کلاینت با پشتیبانی از Supabase و نشست‌های رمزنگاری‌شده محلی | `src/services/authService.ts`<br>`src/services/supabaseClient.ts` | **E2** | ✅ `PASS` |
-| **فاز ۱** | `SEC-03` | تنظیم سخت‌گیرانه متای CSP و هدرهای امنیتی HSTS و nosniff در کلاینت و ورکر | `index.html`<br>`workflows/cloudflare-worker/validator-worker.ts` | **E1** | ✅ `PASS` |
-| **فاز ۲** | `DB-01` | لایه مدیریت نودها و کش محلی هوشمند (Offline Resilience & Vaulting) | `src/services/configDbService.ts` | **E2** | ✅ `PASS` |
-| **فاز ۲** | `DB-02` | نگارش ساختار جامع PostgreSQL V6.2 و فعال‌سازی RLS برای ۵ جدول کلیدی | `workflows/schema.sql` | **E1** | ✅ `PASS` |
+| **فاز ۱** | `SEC-03` | تنظیم سخت‌گیرانه متای CSP، فایل `robots.txt` و تگ‌های `noindex, nofollow` در صفحات حساس | `index.html`<br>`public/robots.txt`<br>`src/modules/admin/MasterAdminDashboard.tsx`<br>`src/modules/dashboard/UserDashboard.tsx` | **E1** | ✅ `PASS` |
+| **فاز ۲** | `DB-01` | لایه مدیریت نودها و مقالات سئو با موتور امتیازدهی هوشمند و کش محلی | `src/services/configDbService.ts`<br>`src/services/articlesDbService.ts`<br>`src/utils/seoScorer.ts` | **E2** | ✅ `PASS` |
+| **فاز ۲** | `DB-02` | نگارش ساختار جامع PostgreSQL V7.1 و فعال‌سازی RLS برای ۹ جدول کلیدی | `workflows/schema.sql` | **E1** | ✅ `PASS` |
 | **فاز ۲** | `DB-03` | سیستم ثبت تیکت زنده با تولید کدهای رهگیری یکتا و اتصال به میز مدیریت | `src/services/ticketsService.ts`<br>`src/modules/support/SupportPage.tsx` | **E2** | ✅ `PASS` |
 | **فاز ۳** | `SRV-01` | سرویس سنجش پینگ واقعی کلاینت از طریق اندپوینت لبه شبکه (`/validate`) | `src/services/edgePingService.ts`<br>`src/modules/configs/LiveConfigBox.tsx` | **E2** | ✅ `PASS` |
-| **فاز ۳** | `SRV-02` | ارتقای اسکریپت ورکر کلودفلر با اعتبارسنجی هدر محرمانه تلگرام و پردازش دستورات | `workflows/cloudflare-worker/validator-worker.ts` | **E1** | ✅ `PASS` |
+| **فاز ۳** | `SRV-02` | اسکریپت ورکر کلودفلر برای تولید داینامیک نقشه سایت گوگل (`/sitemap.xml`) | `cloudflare-workers/sitemap.js`<br>`cloudflare-workers/README.md` | **E1** | ✅ `PASS` |
+| **فاز ۳** | `SRV-03` | ارتقای اسکریپت ورکر کلودفلر با اعتبارسنجی هدر محرمانه تلگرام و پردازش دستورات | `workflows/cloudflare-worker/validator-worker.ts` | **E1** | ✅ `PASS` |
 | **فاز ۴** | `QA-01` | ساخت مجموعه تست‌های مستقل و ایزوله و اجرای ۱۲ تست در رانر مستقل | `tests/unit/*.test.ts`<br>`tests/runner.ts` | **E2** | ✅ `PASS` |
 | **فاز ۴** | `DEV-01` | ایجاد پایپ‌لاین Continuous Integration برای بررسی تایپ‌ها و بیلد خودکار | `.github/workflows/ci.yml` | **E1** | ✅ `PASS` |
 | **فاز ۴** | `DEV-02` | ایجاد پایپ‌لاین ساخت و توزیع فایل APK Release برای اندروید در گیت‌هاب | `.github/workflows/build-apk.yml` | **E1** | ✅ `PASS` |
@@ -57,23 +58,27 @@
           ┌───────────────────────────┼───────────────────────────┐
           ▼                           ▼                           ▼
   [ گام ۱: پایگاه‌داده ]       [ گام ۲: کلودفلر ورکر ]     [ گام ۳: گیت‌هاب و اندروید ]
-  اجرای schema.sql در         دیپلوی ورکر و تست           پوش به ریپازیتوری و تست
-  داشبورد Supabase            وب‌هوک با curl              نصب APK روی گوشی فیزیکی
+  اجرای schema.sql V7.1 در    دیپلوی ورکر نقشه سایت       پوش به ریپازیتوری و تست
+  داشبورد Supabase و تست RLS  و ورکر ولیدیتور             نصب APK روی گوشی فیزیکی
 ```
 
 ---
 
-### 🗄️ گام ۱: راه‌اندازی و تست پایگاه‌داده (Supabase Cloud Database)
+### 🗄️ گام ۱: راه‌اندازی و تست پایگاه‌داده (Supabase Cloud Database — اقدام کنونی)
 
 #### اقدام ۱.۱: اجرای اسکریپت ساختار پایگاه‌داده و امنیت RLS
 - **محل اقدام:** پنل [Supabase Dashboard](https://supabase.com/dashboard) ⬅️ انتخاب پروژه ⬅️ منوی **SQL Editor**
 - **دستور اجرایی:** کل محتوای فایل `workflows/schema.sql` موجود در پروژه را کپی کرده و در SQL Editor دکمه **Run** را بزنید.
-- **تاییدیه مورد انتظار (Expected Result):** نمایش پیام `Success. No rows returned` و ایجاد ۵ جدول:
-  1. `configs`
-  2. `proxies`
-  3. `telegram_media_queue`
-  4. `support_tickets`
-  5. `wallet_transactions`
+- **تاییدیه مورد انتظار (Expected Result):** نمایش پیام `Success. No rows returned` و ایجاد ۹ جدول زیر:
+  1. `profiles`
+  2. `configs`
+  3. `proxies`
+  4. `telegram_media_queue`
+  5. `support_tickets`
+  6. `wallet_transactions`
+  7. `user_subscriptions`
+  8. `articles`
+  9. `news`
 
 #### اقدام ۱.۲: تست امنیتی RLS (`TEST ID: DB-RLS-001`)
 - **محل اقدام:** همان بخش **SQL Editor** در Supabase
@@ -83,63 +88,42 @@
   SELECT count(*) FROM public.configs WHERE is_active = false;
   ```
 - **تاییدیه مورد انتظار (Expected Result):** خروجی جدول باید یک سطر با مقدار `count = 0` باشد (اثبات اینکه نودهای غیرفعال به کاربر عمومی نشان داده نمی‌شوند).
-- **مدرک مورد نیاز برای بازرس:** متن خروجی یا اسکرین‌شات جدول نتیجه.
+
+#### اقدام ۱.۳: تست امنیت مقالات منتشرنشده (`TEST ID: DB-CMS-001`)
+- **محل اقدام:** بخش **SQL Editor** در Supabase
+- **دستور تست (SQL):**
+  ```sql
+  SET ROLE anon;
+  SELECT count(*) FROM public.articles WHERE is_published = false;
+  ```
+- **تاییدیه مورد انتظار (Expected Result):** خروجی `count = 0` (پیش‌نویس مقالات برای عموم مخفی است).
+- **مدرک مورد نیاز برای بازرس:** متن خروجی یا اسکرین‌شات جدول نتیجه را در چت ارسال کنید.
 
 ---
 
-### ⚡ گام ۲: دیپلوی و تست سرورلس لبه (Cloudflare Worker & Webhook)
+### ⚡ گام ۲: دیپلوی و تست سرورلس لبه (Cloudflare Workers & Webhook)
 
-#### اقدام ۲.۱: استقرار (Deploy) ورکر کلودفلر
-- **محل اقدام:** پنل [Cloudflare Dashboard](https://dash.cloudflare.com) ⬅️ منوی **Workers & Pages** ⬅️ ایجاد یک Worker جدید با نام `etesal-validator`
-- **دستور اجرایی:** محتوای فایل `workflows/cloudflare-worker/validator-worker.ts` را در ادیتور ورکر قرار دهید و دکمه **Deploy** را بزنید.
-- **تنظیم متغیرهای محرمانه:** در بخش Settings ⬅️ Variables ورکر، متغیرهای زیر را اضافه کنید:
-  - `TELEGRAM_BOT_TOKEN`
-  - `TELEGRAM_WEBHOOK_SECRET`
+#### اقدام ۲.۱: استقرار ورکر نقشه سایت پویا (`cloudflare-workers/sitemap.js`)
+- **محل اقدام:** پنل [Cloudflare Dashboard](https://dash.cloudflare.com) ⬅️ منوی **Workers & Pages** ⬅️ ایجاد Worker جدید بنام `etesal-sitemap-worker`.
+- **متغیرها:** در بخش Settings ⬅️ Variables، متغیرهای `SUPABASE_URL` و `SUPABASE_ANON_KEY` را وارد کنید.
+- **مسیر (Route):** مسیر `etesal.aeherai.ir/sitemap.xml` را به این ورکر وصل کنید.
 
-#### اقدام ۲.۲: تست گیت امنیتی وب‌هوک تلگرام (`TEST ID: TG-001`)
-- **محل اقدام:** ترمینال سیستم خودتان (Command Prompt یا Terminal)
-- **دستور تست (Terminal):**
-  ```bash
-  curl -i -X POST https://<آدرس-ورکر-شما>.workers.dev/telegram/webhook \
-    -H "Content-Type: application/json" \
-    -d '{"update_id":12345,"message":{"text":"/stats"}}'
-  ```
-- **تاییدیه مورد انتظار (Expected Result):** خط اول پاسخ باید دقیقاً `HTTP/1.1 401 Unauthorized` باشد.
-- **مدرک مورد نیاز برای بازرس:** کپی چند خط اول پاسخ ترمینال.
-
-#### اقدام ۲.۳: تست پینگ واقعی ورکر (`TEST ID: CF-001`)
-- **محل اقدام:** ترمینال سیستم خودتان
-- **دستور تست (Terminal):**
-  ```bash
-  curl -X POST https://<آدرس-ورکر-شما>.workers.dev/validate \
-    -H "Content-Type: application/json" \
-    -d '{"type":"config","node":{"configString":"vless://test@1.1.1.1:443?security=reality&pbk=123"}}'
-  ```
-- **تاییدیه مورد انتظار (Expected Result):** دریافت پاسخ JSON با فیلدهای `valid: true` و `latencyMs` عددی.
-- **مدرک مورد نیاز برای بازرس:** متن پاسخ JSON دریافتی.
+#### اقدام ۲.۲: استقرار ورکر اعتبارسنجی و ربات (`workflows/cloudflare-worker/validator-worker.ts`)
+- ایجاد ورکر بنام `etesal-validator` با متغیرهای `TELEGRAM_BOT_TOKEN` و `TELEGRAM_WEBHOOK_SECRET`.
 
 ---
 
 ### 📱 گام ۳: تست بیلد خودکار و اجرای اندروید (GitHub Actions & Android APK)
 
 #### اقدام ۳.۱: ارسال کدها به ریپازیتوری گیت‌هاب (Git Push)
-- **محل اقدام:** ترمینال مخزن گیت پروژه
-- **دستور اجرایی:**
-  ```bash
-  git add .
-  git commit -m "feat(core): commercial grade production release v6.6"
-  git push origin main
-  ```
-- **تاییدیه مورد انتظار (Expected Result):** در تب **Actions** گیت‌هاب، ورک‌فلوهای `ci.yml` و `build-apk.yml` اجرا شده و تیک سبز (Green Checkmark) دریافت کنند.
+```bash
+git add .
+git commit -m "feat(core): commercial grade production release v7.1"
+git push origin main
+```
 
 #### اقدام ۳.۲: تست نصب روی گوشی واقعی اندروید (`TEST ID: APK-001`)
-- **محل اقدام:** گوشی فیزیکی با سیستم‌عامل اندروید ۱۰ به بالا
-- **مراحل:**
-  1. دانلود فایل `etesal-hub-v6-release.apk` از خروجی Artifacts اکشن گیت‌هاب یا پوشه بیلد.
-  2. نصب فایل روی گوشی.
-  3. باز کردن برنامه، بررسی فونت فارسی راست‌چین (RTL)، اسکرول لیست کانفیگ‌ها و زدن دکمه «تست مجدد پینگ».
-- **تاییدیه مورد انتظار (Expected Result):** اجرای بدون لگ، لود زیر ۲ ثانیه و عدم بروز صفحه سفید (White Screen of Death) یا کرش ناگهانی.
-- **مدرک مورد نیاز برای بازرس:** اعلام تایید اجرای موفق روی گوشی.
+دانلود فایل APK تولیدی در بخش GitHub Actions و تست اجرای روان روی گوشی.
 
 ---
 
@@ -150,13 +134,13 @@
 | **۱** | کامپایل و تایپ‌های کلاینت (`tsc --noEmit`) | **AI** | خروجی `Exit 0` بدون هیچ ارور | 🟢 **PASS (E2)** |
 | **۲** | بیلد باندل نهایی پروداکشن (`vite build`) | **AI** | تولید بدون نقص پوشه `dist/` | 🟢 **PASS (E2)** |
 | **۳** | رانر تست‌های ۱۲ گانه ایزوله (`tests/runner.ts`) | **AI** | ۱۲ تست موفق از ۱۲ تست | 🟢 **PASS (E2)** |
-| **۴** | تست RLS دیتابیس در Supabase (`DB-RLS-001`) | **کاربر** | خروجی `count = 0` در کوئری | ⏳ **منتظر ارسال خروجی کاربر** |
+| **۴** | تست RLS دیتابیس در Supabase (`DB-RLS-001`) | **کاربر** | خروجی `count = 0` در کوئری | ⏳ **منتظر اجرای کاربر در Supabase** |
 | **۵** | تست مسدودسازی وب‌هوک جعلی کلودفلر (`TG-001`) | **کاربر** | بازگرداندن پاسخ `401 Unauthorized` | ⏳ **منتظر ارسال خروجی کاربر** |
-| **۶** | تست پاسخ پینگ لبه شبکه کلودفلر (`CF-001`) | **کاربر** | دریافت `valid: true` و تاخیر واقعی | ⏳ **منتظر ارسال خروجی کاربر** |
+| **۶** | تست نقشه سایت در کلودفلر (`CF-SITEMAP-001`) | **کاربر** | دریافت خروجی XML معتبر | ⏳ **منتظر ارسال خروجی کاربر** |
 | **۷** | تست نصب و اجرای APK روی گوشی (`APK-001`) | **کاربر** | اجرای روان برنامه بدون کرش | ⏳ **منتظر ارسال خروجی کاربر** |
 
 ---
 
 ## 🚀 نتیجه‌گیری و گام بعدی
 
-به محض اینکه شما تست‌های بخش **۲ (اقدامات کاربر)** را اجرا نموده و خروجی‌های آن را در چت ارسال فرمایید، بازرس مستقل وضعیت پروژه را در اسناد ممیزی به **`RELEASE APPROVED 🟢`** ارتقا خواهد داد.
+به محض اینکه شما اسکریپت `workflows/schema.sql` را در Supabase اجرا کرده و نتیجه کوئری تست RLS را اعلام فرمایید، وضعیت پایگاه داده به عنوان `VERIFIED` ثبت شده و بلافاصله گام بعدی (دیپلوی ورکر کلودفلر) را نهایی خواهیم کرد.

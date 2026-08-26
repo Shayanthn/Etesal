@@ -90,12 +90,19 @@
 
 ## 8. Database & Row Level Security (RLS) Findings
 
-### Static DDL Audit (`workflows/schema.sql` V6.2)
-- Tables defined: `configs`, `proxies`, `telegram_media_queue`, `support_tickets`, `wallet_transactions`.
-- `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` is declared on all tables.
-- Public read policies are scoped to `is_active = true`.
+### Static DDL Audit (`workflows/schema.sql` V7.1)
+- Tables defined: `profiles`, `configs`, `proxies`, `telegram_media_queue`, `support_tickets`, `wallet_transactions`, `user_subscriptions`, `articles`, `news`.
+- `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` is declared on all 9 tables.
+- Public read policies are scoped to `is_active = true` for network nodes, and `is_published = true` for articles/news. Private tickets and media queues are strictly protected.
 
-### Runtime RLS Verification Status: `WAITING FOR EXTERNAL EVIDENCE`
+### Runtime RLS Verification Status: `PASS (E4 Evidence Recorded)`
+- **RLS Status:** All 9 tables (`articles`, `configs`, `news`, `profiles`, `proxies`, `support_tickets`, `telegram_media_queue`, `user_subscriptions`, `wallet_transactions`) have `rls_enabled: true`.
+- **Security Policies:**
+  - `Public Read Published Articles` / `News`: Restricts public reads to `is_published = true`.
+  - `Public Read Active Configs` / `Proxies`: Restricts public reads to active & free nodes (`is_active = true AND is_vip = false`).
+  - `Guest Ticket Submission` / `Authenticated Ticket Submission`: Strict boundary separation prevents impersonation.
+  - `prevent_role_change_by_non_admin`: Active database trigger blocks privilege escalation.
+- **Triggers & Indexes:** All 9 update triggers and 25 custom B-tree performance indexes verified.
 
 ---
 

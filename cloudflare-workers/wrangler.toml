@@ -1,0 +1,12 @@
+name = "etesal-sitemap-worker"
+main = "sitemap.js"
+compatibility_date = "2023-07-01"
+
+# این ورکر مستقیماً به آدرس زیر متصل می‌شود
+routes = [
+  { pattern = "etesal.aetherai.ir/sitemap.xml", zone_name = "aetherai.ir" }
+]
+
+# متغیرهای غیرمحرمانه
+[vars]
+BASE_URL = "https://etesal.aetherai.ir"
