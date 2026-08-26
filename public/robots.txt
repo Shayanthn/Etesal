@@ -1,0 +1,11 @@
+# Technical SEO Robots.txt for Etesal Hub
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /*?*
+
+# Crawl Delay
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://etesal.vpnbuying.workers.dev/sitemap.xml

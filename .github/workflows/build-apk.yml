@@ -1,0 +1,93 @@
+name: Build & Release Android APK (Etesal Hub)
+
+on:
+  push:
+    tags:
+      - 'v*' # Runs automatically on version tags, e.g. v6.0.4
+    branches:
+      - main
+  workflow_dispatch: # Allows manual one-click trigger from GitHub UI
+
+jobs:
+  build-android:
+    name: Build Native Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Build Web Production Assets
+        run: npm run build
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Sync Capacitor Android Project
+        run: |
+          npx cap sync android || (npx cap add android && npx cap sync android)
+
+      - name: Build Android Release APK with Gradle
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+
+      - name: Generate SHA-256 Checksum
+        id: checksum
+        run: |
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -f "$APK_PATH" ]; then
+            cp "$APK_PATH" ./etesal-hub-release.apk
+            sha256sum ./etesal-hub-release.apk > ./etesal-hub-release.apk.sha256
+            echo "APK_GENERATED=true" >> $GITHUB_ENV
+            echo "SHA256=$(cat ./etesal-hub-release.apk.sha256 | awk '{print $1}')" >> $GITHUB_ENV
+          else
+            echo "APK_GENERATED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Upload APK Build Artifact
+        uses: actions/upload-artifact@v4
+        if: env.APK_GENERATED == 'true'
+        with:
+          name: etesal-hub-android-apk
+          path: |
+            ./etesal-hub-release.apk
+            ./etesal-hub-release.apk.sha256
+          retention-days: 30
+
+      - name: Create Official GitHub Release (Tag push only)
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') && env.APK_GENERATED == 'true'
+        with:
+          name: "Etesal Hub Official Release ${{ github.ref_name }}"
+          body: |
+            ### 🚀 اپلیکیشن رسمی سامانه اتصال (Etesal)
+            - **نسخه:** `${{ github.ref_name }}`
+            - **شناسه بسته:** `ir.aeherai.etesal`
+            - **هش امنیتی SHA-256:** `${{ env.SHA256 }}`
+            - **پشتیبانی در تلگرام:** [@NetWithoutBorders](https://t.me/NetWithoutBorders)
+            - **کانال اطلاع‌رسانی:** [@vpnbuying](https://t.me/vpnbuying)
+            
+            *کامپایل شده امن و بدون هیچ‌گونه لاگ یا ترکینگ هویت.*
+          files: |
+            ./etesal-hub-release.apk
+            ./etesal-hub-release.apk.sha256
+          draft: false
+          prerelease: false

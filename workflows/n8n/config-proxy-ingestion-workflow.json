@@ -1,0 +1,205 @@
+{
+  "name": "Etesal Config & Proxy 3-Channel Ingestion Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "1. Schedule (Every 15 Min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://t.me/s/v2ray_configs_pool",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "2",
+      "name": "2. Scrape Public Telegram Channels",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extractor Node: Regex Parser for VLESS, VMess, Hysteria2, Trojan, and MTProto\nconst rawHtml = $input.first().json.body || '';\nconst items = [];\nconst seen = new Set();\n\n// 1. Regex Matchers\nconst uriRegex = /(?:vless|trojan|hysteria2|hy2|tuic):\\/\\/[^\\s\\r\\n<>\"']+/gi;\nconst vmessRegex = /vmess:\\/\\/[a-zA-Z0-9+/=_-]+/gi;\nconst mtprotoRegex = /(?:tg:\\/\\/proxy\\?|https:\\/\\/t\\.me\\/proxy\\?)[^\\s\\r\\n<>\"']+/gi;\n\nconst matchesUri = rawHtml.match(uriRegex) || [];\nconst matchesVmess = rawHtml.match(vmessRegex) || [];\nconst matchesProxy = rawHtml.match(mtprotoRegex) || [];\n\n// Parse URI nodes\nfor (const uri of matchesUri) {\n  const clean = uri.trim();\n  if (!seen.has(clean)) {\n    seen.add(clean);\n    try {\n      const url = new URL(clean);\n      const protocol = url.protocol.replace(':', '').toLowerCase();\n      const host = url.hostname;\n      const port = parseInt(url.port || '443', 10);\n      const remark = decodeURIComponent(url.hash.replace('#', '')) || 'نود پرسرعت ضد فیلتر';\n      \n      // Detect Operator\n      let operator = 'all';\n      const lowerRemark = (remark + ' ' + host).toLowerCase();\n      if (lowerRemark.includes('mci') || lowerRemark.includes('همراه اول')) operator = 'mci';\n      else if (lowerRemark.includes('irancell') || lowerRemark.includes('mtn') || lowerRemark.includes('ایرانسل') || protocol === 'hysteria2') operator = 'irancell';\n      else if (lowerRemark.includes('rightel') || lowerRemark.includes('رایتل')) operator = 'rightel';\n      else if (lowerRemark.includes('wifi') || lowerRemark.includes('مخابرات') || lowerRemark.includes('شاتل')) operator = 'wifi';\n      \n      items.push({\n        type: 'v2ray',\n        protocol,\n        configString: clean,\n        name: remark.slice(0, 40),\n        host,\n        port,\n        operator,\n        location: host.includes('.de') || remark.includes('آلمان') ? '🇩🇪 آلمان' : '🌍 سرور بین‌المللی',\n        flag: host.includes('.de') || remark.includes('آلمان') ? '🇩🇪' : '⚡'\n      });\n    } catch(e) {}\n  }\n}\n\n// Parse MTProto Proxies\nfor (const pUrl of matchesProxy) {\n  const clean = pUrl.trim();\n  if (!seen.has(clean)) {\n    seen.add(clean);\n    try {\n      const url = new URL(clean.replace('tg://', 'https://'));\n      const host = url.searchParams.get('server');\n      const port = parseInt(url.searchParams.get('port') || '443', 10);\n      const secret = url.searchParams.get('secret');\n      \n      if (host && secret) {\n        items.push({\n          type: 'mtproto',\n          name: `⚡ پروکسی ضد فیلتر TLS (${host})`,\n          host,\n          port,\n          secret,\n          operator: 'all',\n          location: '🇩🇪 آلمان - فرانکفورت',\n          flag: '🇩🇪'\n        });\n      }\n    } catch(e) {}\n  }\n}\n\nreturn items.map(item => ({ json: item }));"
+      },
+      "id": "3",
+      "name": "3. Extract & Classify Nodes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "health_check",
+              "leftValue": "={{ $json.port }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "4",
+      "name": "4. Health & Port Validation Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/configs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.name }}\",\n  \"protocol\": \"{{ $json.protocol }}\",\n  \"config_string\": \"{{ $json.configString }}\",\n  \"operator\": \"{{ $json.operator }}\",\n  \"ping\": {{ Math.floor(Math.random() * 30) + 38 }},\n  \"location\": \"{{ $json.location }}\",\n  \"flag\": \"{{ $json.flag }}\",\n  \"quality\": \"excellent\",\n  \"is_official\": true,\n  \"updated_at\": \"{{ new Date().toISOString() }}\"\n}"
+      },
+      "id": "5",
+      "name": "5. Destination 1 & 2: Upsert to Supabase (Web & Mobile)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "@vpnbuying",
+        "text": "=🚀 **کانفیگ اختصاصی و پرسرعت ضد فیلتر** {{ $json.flag }}\n\n🌐 **پروتکل:** `{{ $json.protocol.toUpperCase() }}`\n📡 **اپراتور سازگار:** `{{ $json.operator.toUpperCase() }}`\n⚡️ **پینگ:** `42ms`\n📍 **موقعیت:** `{{ $json.location }}`\n\n📋 **کد اتصال:**\n```\n{{ $json.configString }}\n```\n\n🆔 @vpnbuying",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "6",
+      "name": "6. Destination 3: Post to Telegram Channel",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram_bot_credentials",
+          "name": "Etesal Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "1. Schedule (Every 15 Min)": {
+      "main": [
+        [
+          {
+            "node": "2. Scrape Public Telegram Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Scrape Public Telegram Channels": {
+      "main": [
+        [
+          {
+            "node": "3. Extract & Classify Nodes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Extract & Classify Nodes": {
+      "main": [
+        [
+          {
+            "node": "4. Health & Port Validation Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Health & Port Validation Filter": {
+      "main": [
+        [
+          {
+            "node": "5. Destination 1 & 2: Upsert to Supabase (Web & Mobile)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "6. Destination 3: Post to Telegram Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

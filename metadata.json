@@ -1,0 +1,8 @@
+{
+  "name": "Remix اتصال | Etesal Hub",
+  "description": "پورتال هوشمند ضد فیلتر، کانفیگ‌های تست‌شده Reality و پروکسی‌های تلگرام",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
