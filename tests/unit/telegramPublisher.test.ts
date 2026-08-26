@@ -25,7 +25,7 @@ export function runTelegramPublisherTests(): { passed: number; failed: number; e
 
   // Test 1: Fallback footer when no proxies attached
   const emptyFooter = generateInlineProxyFooter([]);
-  assert(emptyFooter.includes('etesal.app') && emptyFooter.includes('@vpnbuying'), 'Generates default channel footer when proxy list is empty');
+  assert(emptyFooter.includes('etesal.aetherai.ir') && emptyFooter.includes('@vpnbuying'), 'Generates default channel footer when proxy list is empty');
 
   // Test 2: Standard inline proxy links formatting
   const mockProxies = [

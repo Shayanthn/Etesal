@@ -1,6 +1,7 @@
 name = "etesal-validator"
 main = "validator-worker.ts"
 compatibility_date = "2023-07-01"
+workers_dev = true
 
 # این ورکر تمام درخواست‌های مسیر API را هندل می‌کند
 routes = [

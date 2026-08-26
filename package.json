@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "tsc --noEmit",
+    "test": "npx tsx tests/runner.ts",
     "preview": "vite preview"
   },
   "dependencies": {

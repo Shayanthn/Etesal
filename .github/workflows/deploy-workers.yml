@@ -17,6 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: ⚙️ Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Deploy Sitemap Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
@@ -34,6 +39,11 @@ jobs:
     name: Deploy Validator Worker
     steps:
       - uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Deploy Validator Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3

@@ -1,6 +1,7 @@
 name = "etesal-sitemap-worker"
 main = "sitemap.js"
 compatibility_date = "2023-07-01"
+workers_dev = true
 
 # این ورکر مستقیماً به آدرس زیر متصل می‌شود
 routes = [
