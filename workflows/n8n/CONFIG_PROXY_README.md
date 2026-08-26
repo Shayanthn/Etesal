@@ -1,7 +1,7 @@
 # 🛰️ پایپ‌لاین اتوماسیون استخراج، فیلتر سلامت و توزیع کانفیگ و پروکسی (Etesal 3-Way Dispatcher)
 
 این سیستم معماری هوشمند استخراج خودکار نودهای ضد فیلتر (VLESS Reality, VMess, Hysteria 2, Trojan, MTProto) و توزیع همزمان آن‌ها در **۳ مقصد مجزا** است:
-1. **🌐 وب‌سایت اتصال (Web Dashboard)**
+1. **🌐 وب‌سایت اتصال (WeB Dashboard)** 
 2. **📱 اپلیکیشن اندروید (Mobile App Subscription Feed)**
 3. **🚀 کانال عمومی تلگرام (Telegram Channel Direct Auto-Posting)**
 
