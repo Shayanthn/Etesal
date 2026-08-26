@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { 
   User as UserType, 
   ActiveSession, 
@@ -290,6 +291,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
   return (
     <div className="py-6 md:py-10 space-y-6 text-right animate-fade-in dir-rtl">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       
       {/* Top Breadcrumb & User Welcome Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 md:p-6 rounded-3xl bg-slate-900/90 border border-purple-500/30 shadow-2xl backdrop-blur-xl relative overflow-hidden">

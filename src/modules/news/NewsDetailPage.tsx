@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { 
   ArrowLeft, 
   Clock, 
@@ -103,6 +104,15 @@ export const NewsDetailPage: React.FC<NewsDetailPageProps> = ({
 
   return (
     <div className="space-y-8 text-right py-4 max-w-4xl mx-auto animate-in fade-in duration-300">
+      <Helmet>
+        <title>{(article as any).meta_title || article.title} | رصدخانه اخبار اتصال</title>
+        <meta name="description" content={(article as any).meta_description || article.summary} />
+        <meta property="og:title" content={(article as any).meta_title || article.title} />
+        <meta property="og:description" content={(article as any).meta_description || article.summary} />
+        <meta property="og:image" content={article.imageUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={`${window.location.origin}/news/${article.slug}`} />
+      </Helmet>
       
       {/* Top Breadcrumb */}
       <div className="flex items-center justify-between">

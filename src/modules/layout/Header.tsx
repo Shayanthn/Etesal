@@ -17,11 +17,11 @@ import { Language, User } from '../../types';
 interface HeaderProps {
   language: Language;
   currentUser: User | null;
-  currentView: 'home' | 'dashboard' | 'download' | 'support' | 'news' | 'admin' | '404';
+  currentView: 'home' | 'dashboard' | 'download' | 'support' | 'news' | 'admin' | '404' | 'article';
   onToggleLanguage: () => void;
   onOpenApkModal: () => void;
   onOpenAuthModal: (mode: 'login' | 'register') => void;
-  onNavigate: (view: 'home' | 'dashboard' | 'download' | 'support' | 'news' | 'admin' | '404') => void;
+  onNavigate: (view: 'home' | 'dashboard' | 'download' | 'support' | 'news' | 'admin' | '404' | 'article') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({

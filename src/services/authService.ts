@@ -58,7 +58,7 @@ export function createDefaultUserStructure(
       usedTrafficGB: 0.0,
       expireDate: '۳۰ روز دیگر',
       daysRemaining: 30,
-      subscriptionUrl: 'https://sub.etesal.app/v2/sub/free_' + cleanUsername,
+      subscriptionUrl: `https://etesal.aetherai.ir/api/sub/free_${cleanUsername}`,
       status: 'active',
       dailyUsage: [
         { date: 'شنبه', gigabytes: 0.0 },
@@ -175,11 +175,25 @@ export async function loginUser(
         return { success: false, error: 'نام کاربری یا رمز عبور اشتباه است.' };
       }
 
+      // Fetch profile from database
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role, avatar_url')
+        .eq('id', data.user.id)
+        .single();
+
       // Check if user profile exists in session storage
       const savedUser = getSavedLocalSession();
-      const user = (savedUser && savedUser.username === cleanUsername)
+      let user = (savedUser && savedUser.username === cleanUsername)
         ? savedUser
         : createDefaultUserStructure(data.user.id, cleanUsername, authEmail);
+        
+      if (profileData) {
+        user.role = profileData.role;
+        if (profileData.avatar_url) {
+          user.avatar = profileData.avatar_url;
+        }
+      }
 
       saveLocalSession(user);
       return { success: true, user, isNewUser: false };

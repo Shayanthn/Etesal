@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { 
   Send, 
   Headphones, 
@@ -86,6 +87,9 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onBackToHome, onShowTo
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300 text-right py-4 max-w-4xl mx-auto">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       
       {/* Top Breadcrumb */}
       <div className="flex items-center justify-between">

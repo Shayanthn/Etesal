@@ -34,6 +34,7 @@ import { DownloadPage } from './modules/download/DownloadPage';
 import { SupportPage } from './modules/support/SupportPage';
 import { NewsHub } from './modules/news/NewsHub';
 import { NewsDetailPage } from './modules/news/NewsDetailPage';
+import { ArticleDetailPage } from './modules/articles/ArticleDetailPage';
 import { AuthModal } from './modules/auth/AuthModal';
 import { UserDashboard } from './modules/dashboard/UserDashboard';
 import { MasterAdminDashboard } from './modules/admin/MasterAdminDashboard';
@@ -42,13 +43,15 @@ import { ToastContainer } from './modules/feedback/ToastContainer';
 import { NewsArticle } from './types/news';
 import { SAMPLE_NEWS_ARTICLES } from './data/newsData';
 import { getSavedLocalSession, logoutUser, saveLocalSession } from './services/authService';
+import { fetchArticleBySlug } from './services/contentService';
 import { runBatchEdgePing } from './services/edgePingService';
 
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [language, setLanguage] = useState<Language>('fa');
-  const [currentView, setCurrentView] = useState<'home' | 'dashboard' | 'download' | 'support' | 'news' | 'admin' | '404'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'dashboard' | 'download' | 'support' | 'news' | 'admin' | '404' | 'article'>('home');
   const [activeNewsArticle, setActiveNewsArticle] = useState<NewsArticle | null>(null);
+  const [activeArticleData, setActiveArticleData] = useState<any | null>(null);
   const [configs, setConfigs] = useState<V2RayConfig[]>(SAMPLE_CONFIGS);
   const [proxies, setProxies] = useState<MtprotoProxy[]>(SAMPLE_PROXIES);
   const [isTestingPing, setIsTestingPing] = useState(false);
@@ -111,6 +114,12 @@ export const App: React.FC = () => {
             setActiveNewsArticle(found);
           }
         }
+      } else if (path.startsWith('/article/')) {
+        const slug = path.replace('/article/', '').trim();
+        setCurrentView('article');
+        fetchArticleBySlug(slug).then(data => {
+          if (data) setActiveArticleData(data);
+        });
       } else {
         // Any unknown or invalid route triggers standard 404
         setCurrentView('404');
@@ -142,6 +151,12 @@ export const App: React.FC = () => {
         } else {
           setActiveNewsArticle(null);
         }
+      } else if (currentPath.startsWith('/article/')) {
+        const slug = currentPath.replace('/article/', '').trim();
+        setCurrentView('article');
+        fetchArticleBySlug(slug).then(data => {
+          if (data) setActiveArticleData(data);
+        });
       } else {
         setCurrentView('404');
       }
@@ -363,6 +378,18 @@ export const App: React.FC = () => {
             />
           )}
         </main>
+      ) : currentView === 'article' && activeArticleData ? (
+        <main className="container mx-auto px-4 max-w-6xl space-y-4">
+          <ArticleDetailPage 
+            article={activeArticleData}
+            onBackToArticles={() => {
+              window.history.pushState({}, '', '/');
+              setCurrentView('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onShowToast={addToast}
+          />
+        </main>
       ) : (
         /* Main Home Content Layout */
         <main className="container mx-auto px-4 max-w-6xl space-y-4">
@@ -410,7 +437,15 @@ export const App: React.FC = () => {
           {/* Technical SEO & Knowledge Base Articles */}
           <ArticlesSection
             articles={KNOWLEDGE_ARTICLES}
-            onSelectArticle={art => setSelectedArticle(art)}
+            onSelectArticle={art => {
+              const slug = (art as any).slug || art.id;
+              window.history.pushState({}, '', `/article/${slug}`);
+              setCurrentView('article');
+              fetchArticleBySlug(slug).then(data => {
+                if (data) setActiveArticleData(data);
+              });
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
 
           {/* Music Hub & Radio Player */}

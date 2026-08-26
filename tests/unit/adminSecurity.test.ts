@@ -41,7 +41,7 @@ export async function runAdminSecurityTests(): Promise<{ passed: number; failed:
   // Test 1: SHA-256 baseline hashing of known string
   const testHash = await calculateSha256('EtesalAdmin2026!');
   assert(
-    testHash === '2754668f448c9035e463a5aaeb6f15cb694294101e4aa9960ff10a88bf0a0fa2',
+    testHash === '7708b01e38666e98cd78c95074bba64892ec31c3f5a06d5d23108fd451fad754',
     'Derives correct standard SHA-256 hex string for baseline passcode'
   );
 

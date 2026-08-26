@@ -27,8 +27,8 @@ export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
           configString: item.config_string,
           operator: item.operator || 'all',
           ping: item.ping || 45,
-          location: item.location || '🇩🇪 آلمان - Frankfurt',
-          flag: item.flag || '🇩🇪',
+          location: item.location || 'سرور بین‌المللی اختصاصی',
+          flag: item.flag || '⚡',
           quality: item.quality || 'excellent',
           tlsType: item.protocol === 'hysteria2' ? 'quic/tls' : 'reality',
           transport: item.protocol === 'hysteria2' ? 'udp' : 'tcp',
@@ -74,8 +74,8 @@ export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
           port: item.port,
           secret: item.secret,
           ping: item.ping || 35,
-          location: item.location || '🇩🇪 فرانکفورت - آلمان',
-          flag: item.flag || '🇩🇪',
+          location: item.location || 'سرور بین‌المللی اختصاصی',
+          flag: item.flag || '⚡',
           verifiedAt: 'لحظاتی پیش',
           isVip: false
         }));

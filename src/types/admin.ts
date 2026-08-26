@@ -2,6 +2,7 @@ export type AdminTab =
   | 'overview' 
   | 'sources' 
   | 'news' 
+  | 'articles'
   | 'configs' 
   | 'proxies' 
   | 'music' 

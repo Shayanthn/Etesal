@@ -40,7 +40,7 @@ export interface TelegramMediaQueueItem {
  */
 export function generateInlineProxyFooter(proxies: TelegramProxyItem[], maxCount: number = 3): string {
   if (!proxies || proxies.length === 0) {
-    return `\n\n🌐 وب‌سایت: etesal.app\n🆔 کانال تلگرام: @vpnbuying`;
+    return `\n\n🌐 وب‌سایت: etesal.aetherai.ir\n🆔 کانال تلگرام: @vpnbuying`;
   }
 
   const selected = proxies.slice(0, maxCount);
@@ -51,7 +51,7 @@ export function generateInlineProxyFooter(proxies: TelegramProxyItem[], maxCount
 
   const inlineList = proxyLinks.join(' • ');
 
-  return `\n\n⚡️ ${inlineList}\n\n🌐 وب‌سایت: etesal.app\n🆔 کانال تلگرام: @vpnbuying`;
+  return `\n\n⚡️ ${inlineList}\n\n🌐 وب‌سایت: etesal.aetherai.ir\n🆔 کانال تلگرام: @vpnbuying`;
 }
 
 /**
@@ -108,7 +108,7 @@ export function formatSingleConfigPost(config: TelegramConfigItem): string {
 ${config.configString.trim()}
 \`\`\`
 
-🌐 وب‌سایت: etesal.app
+🌐 وب‌سایت: etesal.aetherai.ir
 🆔 کانال تلگرام: @vpnbuying`;
 }
 

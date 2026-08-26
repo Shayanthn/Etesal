@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { 
   Shield, 
   Activity, 
@@ -53,6 +54,7 @@ import { AdminConfigsManager } from './AdminConfigsManager';
 import { AdminProxiesManager } from './AdminProxiesManager';
 import { AdminMusicManager } from './AdminMusicManager';
 import { AdminConfigProxyIngestionModal } from './AdminConfigProxyIngestionModal';
+import { AdminArticlesManager } from './AdminArticlesManager';
 
 interface MasterAdminDashboardProps {
   onShowToast: (toast: { title: string; description: string; type: 'success' | 'info' | 'warning' | 'error' }) => void;
@@ -380,6 +382,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({
 
   return (
     <div className="space-y-6 text-right py-4 animate-in fade-in duration-300 max-w-7xl mx-auto">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       
       {/* Top Admin Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl bg-slate-900/90 border border-purple-500/40 shadow-2xl backdrop-blur-xl">
@@ -423,7 +428,8 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({
         {[
           { id: 'overview', label: 'داشبورد و تله‌متری', icon: Activity },
           { id: 'sources', label: 'مدیریت منابع ورودی (RSS/تلگرام)', icon: Rss, badge: sources.length },
-          { id: 'news', label: 'تحریریه و مقالات', icon: Newspaper, badge: newsList.length },
+          { id: 'news', label: 'اخبار و رصدخانه', icon: Newspaper, badge: newsList.length },
+          { id: 'articles', label: 'مقالات سئو شده', icon: Layers },
           { id: 'configs', label: 'کانفیگ‌ها و Reality', icon: KeyRound, badge: configsList.length },
           { id: 'proxies', label: 'پروکسی‌های MTProto', icon: Radio, badge: proxiesList.length },
           { id: 'music', label: 'هاب موزیک و ربات', icon: Music, badge: musicList.length },
@@ -770,6 +776,10 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({
           onToggleBreaking={handleToggleBreakingNews}
           onDeleteNews={handleDeleteNews}
         />
+      )}
+      
+      {activeTab === 'articles' && (
+        <AdminArticlesManager onShowToast={onShowToast} />
       )}
 
       {/* ========================================================= */}

@@ -23,11 +23,16 @@ export interface TicketOperationResult {
 }
 
 /**
- * Generate cryptographic human-friendly ticket tracking code (e.g. TCK-84920)
+ * Generate cryptographic human-friendly ticket tracking code (e.g. TCK-A1B2C3D4E5F6)
  */
 export function generateTicketCode(): string {
-  const num = Math.floor(100000 + Math.random() * 900000);
-  return `TCK-${num}`;
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = 'TCK-';
+  // 12-16 random secure chars
+  for (let i = 0; i < 12; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 /**
@@ -87,7 +92,6 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
         .from('support_tickets')
         .insert([
           {
-            ticket_code: code,
             user_id: params.userId || null,
             user_name: newTicket.userName,
             user_email: newTicket.userEmail,
@@ -104,14 +108,15 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
         .single();
 
       if (error) {
-        // If DB fails, fallback gracefully to local store
+        // If DB fails, fallback gracefully to local store with a locally generated code
+        newTicket.id = generateTicketCode();
         const vault = getLocalTicketsVault();
         saveLocalTicketsVault([newTicket, ...vault]);
         return { success: true, ticket: newTicket };
       }
 
       if (data) {
-        newTicket.id = data.id || data.ticket_code;
+        newTicket.id = data.ticket_code || data.id;
       }
 
       // Also mirror locally for instant retrieval
@@ -119,6 +124,7 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
       saveLocalTicketsVault([newTicket, ...vault]);
       return { success: true, ticket: newTicket };
     } catch {
+      newTicket.id = generateTicketCode();
       const vault = getLocalTicketsVault();
       saveLocalTicketsVault([newTicket, ...vault]);
       return { success: true, ticket: newTicket };
@@ -126,9 +132,47 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
   }
 
   // Local Offline Mode
+  newTicket.id = generateTicketCode();
   const vault = getLocalTicketsVault();
   saveLocalTicketsVault([newTicket, ...vault]);
   return { success: true, ticket: newTicket };
+}
+
+/**
+ * Fetches all tickets (For Master Admin Dashboard)
+ */
+export async function fetchTicketByCode(code: string): Promise<AdminSupportTicket | null> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.rpc('get_ticket_by_code', { p_ticket_code: code });
+      
+      if (!error && data && data.length > 0) {
+        const item = data[0];
+        return {
+          id: item.ticket_code, // Use code as ID for guests
+          subject: item.subject,
+          category: item.category || 'connection',
+          operator: item.operator || 'mci',
+          userName: 'Guest',
+          message: item.message,
+          status: item.status || 'pending',
+          priority: 'medium',
+          replyMessage: item.reply_message,
+          repliedAt: item.replied_at,
+          createdAt: item.created_at || new Date().toISOString(),
+          updatedAt: item.created_at || new Date().toISOString()
+        } as AdminSupportTicket;
+      }
+    } catch {
+      // Fallback below
+    }
+  }
+
+  // Local Offline Mode fallback
+  const vault = getLocalTicketsVault();
+  const ticket = vault.find(t => t.id === code || (t as any).ticket_code === code || (t as any).ticketCode === code);
+  return ticket || null;
 }
 
 /**

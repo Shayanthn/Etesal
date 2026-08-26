@@ -8,7 +8,7 @@ const ADMIN_SESSION_STORAGE_KEY = 'etesal_admin_auth_token';
 
 // SHA-256 Hash of default administrative security pass: "EtesalAdmin2026!"
 // If VITE_ADMIN_PASSWORD_HASH is set in .env, it takes highest precedence.
-const FALLBACK_ADMIN_SHA256 = '2754668f448c9035e463a5aaeb6f15cb694294101e4aa9960ff10a88bf0a0fa2';
+const FALLBACK_ADMIN_SHA256 = '7708b01e38666e98cd78c95074bba64892ec31c3f5a06d5d23108fd451fad754';
 
 /**
  * Derives SHA-256 hexadecimal hash using native WebCrypto API

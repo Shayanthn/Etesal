@@ -68,6 +68,9 @@ export const INITIAL_TRANSACTIONS: WalletTransaction[] = [
 
 /**
  * ایجاد تراکنش افزایش موجودی (شارژ)
+ * ⚠️ WARNING: In V7.1 Database Schema, client-side INSERT to wallet_transactions is BLOCKED by RLS.
+ * This function currently acts as a local mock. In a production environment, this must be 
+ * handled via a secure backend webhook using the service_role key.
  */
 export function createDepositTransaction(amount: number, referenceId: string): WalletTransaction {
   return {
@@ -83,6 +86,8 @@ export function createDepositTransaction(amount: number, referenceId: string): W
 
 /**
  * خرید کانفیگ اختصاصی با کسر از کیف پول
+ * ⚠️ WARNING: RLS blocks client inserts for transactions. This is a local simulation.
+ * Real purchases must be handled on a secure backend that verifies balance and updates subscription via service_role.
  */
 export function purchaseDedicatedConfig(
   user: User,
@@ -111,7 +116,7 @@ export function purchaseDedicatedConfig(
 
   // تولید لینک سابسکریپشن اختصاصی
   const uniqueSubKey = `vip_${user.username}_${Date.now().toString(36)}`;
-  const dedicatedSubUrl = `https://sub.etesal.app/v2/sub/${uniqueSubKey}?token=${Date.now()}`;
+  const dedicatedSubUrl = `https://etesal.aetherai.ir/api/sub/${uniqueSubKey}?token=${Date.now()}`;
 
   const updatedUser: User = {
     ...user,
