@@ -1,6 +1,6 @@
 /**
- * Etesal Hub - Dynamic & Real-time Sitemap & Robots Generator (Production Grade)
- * Concurrent Fetching, XML Escaping, Robots.txt Handler & Error Fallback
+ * Etesal Hub - Dynamic & Real-time Sitemap & Robots Generator (Production Grade v2)
+ * Fixes: Edge Cache API, AbortController timeout, array-join XML, full XML escaping.
  */
 
 function xmlEscape(str) {
@@ -14,19 +14,26 @@ function xmlEscape(str) {
   }[c]));
 }
 
+function fetchWithTimeout(url, options, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const baseUrl = env.BASE_URL || 'https://etesal.aetherai.ir';
 
-    // ۱. تولید و هندل فایل robots.txt با ارجاع مستقیم به sitemap
+    // ۱. تولید و هندل فایل robots.txt
     if (url.pathname === '/robots.txt') {
       const robotsContent = `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
       return new Response(robotsContent, {
         status: 200,
         headers: {
           'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800'
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
         }
       });
     }
@@ -34,6 +41,12 @@ export default {
     if (url.pathname !== '/sitemap.xml') {
       return new Response('Not Found', { status: 404 });
     }
+
+    // ۲. Cache API لبه کلادفلر جهت محافظت از دیتابیس در برابر Crawl Bursts
+    const cache = caches.default;
+    const cacheKey = new Request(`${baseUrl}/sitemap.xml`, { method: 'GET' });
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
 
     const { SUPABASE_URL, SUPABASE_ANON_KEY } = env;
 
@@ -43,19 +56,19 @@ export default {
   <url>
     <loc>${xmlEscape(baseUrl)}/</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
   </url>
 </urlset>`;
 
+    const fallbackHeaders = (mode) => ({
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+      'X-Sitemap-Mode': mode,
+    });
+
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      return new Response(fallbackSitemap, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/xml; charset=utf-8',
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600'
-        }
-      });
+      const res = new Response(fallbackSitemap, { status: 200, headers: fallbackHeaders('no-config') });
+      ctx.waitUntil(cache.put(cacheKey, res.clone()));
+      return res;
     }
 
     const headers = {
@@ -65,72 +78,77 @@ export default {
     };
 
     try {
-      // ۲. دریافت همزمان و موازی داده‌ها با Promise.all (کاهش ۵۰ درصدی تاخیر)
+      // ۳. دریافت همزمان و موازی با TimeOut سخت ۵ ثانیه‌ای (محافظت از منابع Worker)
       const [articlesResponse, newsResponse] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/articles?is_published=eq.true&select=slug,updated_at&order=updated_at.desc&limit=500`, { headers }).catch(() => null),
-        fetch(`${SUPABASE_URL}/rest/v1/news?is_published=eq.true&select=slug,updated_at&order=updated_at.desc&limit=500`, { headers }).catch(() => null)
+        fetchWithTimeout(`${SUPABASE_URL}/rest/v1/articles?is_published=eq.true&select=slug,updated_at&order=updated_at.desc&limit=500`, { headers }).catch(() => null),
+        fetchWithTimeout(`${SUPABASE_URL}/rest/v1/news?is_published=eq.true&select=slug,updated_at&order=updated_at.desc&limit=500`, { headers }).catch(() => null)
       ]);
 
       const articles = (articlesResponse && articlesResponse.ok) ? await articlesResponse.json() : [];
       const news = (newsResponse && newsResponse.ok) ? await newsResponse.json() : [];
 
-      const latestUpdate = articles[0]?.updated_at?.split('T')[0] || news[0]?.updated_at?.split('T')[0] || new Date().toISOString().split('T')[0];
+      if ((!articlesResponse || !articlesResponse.ok) && (!newsResponse || !newsResponse.ok)) {
+        const res = new Response(fallbackSitemap, { status: 200, headers: fallbackHeaders('db-unreachable') });
+        ctx.waitUntil(cache.put(cacheKey, res.clone()));
+        return res;
+      }
 
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+      const today = new Date().toISOString().split('T')[0];
+      const latestUpdate = xmlEscape(articles[0]?.updated_at?.split('T')[0] || news[0]?.updated_at?.split('T')[0] || today);
+
+      // ۴. ساختار آرایه‌ای برای Join جهت جلوگیری از مشکل O(n²) و OOM در استرینگ‌ها
+      const parts = [];
+      parts.push(`<?xml version="1.0" encoding="UTF-8"?>\n`);
+      parts.push(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`);
 
       // صفحه اصلی
-      xml += `  <url>\n`;
-      xml += `    <loc>${xmlEscape(baseUrl)}/</loc>\n`;
-      xml += `    <lastmod>${latestUpdate}</lastmod>\n`;
-      xml += `    <changefreq>daily</changefreq>\n`;
-      xml += `    <priority>1.0</priority>\n`;
-      xml += `  </url>\n`;
+      parts.push(`  <url>\n`);
+      parts.push(`    <loc>${xmlEscape(baseUrl)}/</loc>\n`);
+      parts.push(`    <lastmod>${latestUpdate}</lastmod>\n`);
+      parts.push(`  </url>\n`);
 
-      // لیست مقالات با اسکیپینگ ایمن
+      // لیست مقالات با اسکیپینگ ایمن و حذف فیلدهای بی‌تاثیر (priority/changefreq)
       articles.forEach(article => {
         if (!article.slug) return;
-        const lastMod = article.updated_at ? article.updated_at.split('T')[0] : latestUpdate;
-        xml += `  <url>\n`;
-        xml += `    <loc>${xmlEscape(baseUrl)}/article/${encodeURIComponent(article.slug)}</loc>\n`;
-        xml += `    <lastmod>${lastMod}</lastmod>\n`;
-        xml += `    <changefreq>weekly</changefreq>\n`;
-        xml += `    <priority>0.8</priority>\n`;
-        xml += `  </url>\n`;
+        const lastMod = xmlEscape(article.updated_at?.split('T')[0] || latestUpdate);
+        parts.push(`  <url>\n`);
+        parts.push(`    <loc>${xmlEscape(baseUrl)}/article/${encodeURIComponent(article.slug)}</loc>\n`);
+        parts.push(`    <lastmod>${lastMod}</lastmod>\n`);
+        parts.push(`  </url>\n`);
       });
 
-      // لیست اخبار با اسکیپینگ ایمن
+      // لیست اخبار
       news.forEach(newsItem => {
         if (!newsItem.slug) return;
-        const lastMod = newsItem.updated_at ? newsItem.updated_at.split('T')[0] : latestUpdate;
-        xml += `  <url>\n`;
-        xml += `    <loc>${xmlEscape(baseUrl)}/news/${encodeURIComponent(newsItem.slug)}</loc>\n`;
-        xml += `    <lastmod>${lastMod}</lastmod>\n`;
-        xml += `    <changefreq>daily</changefreq>\n`;
-        xml += `    <priority>0.7</priority>\n`;
-        xml += `  </url>\n`;
+        const lastMod = xmlEscape(newsItem.updated_at?.split('T')[0] || latestUpdate);
+        parts.push(`  <url>\n`);
+        parts.push(`    <loc>${xmlEscape(baseUrl)}/news/${encodeURIComponent(newsItem.slug)}</loc>\n`);
+        parts.push(`    <lastmod>${lastMod}</lastmod>\n`);
+        parts.push(`  </url>\n`);
       });
 
-      xml += `</urlset>`;
+      parts.push(`</urlset>`);
+      const xml = parts.join('');
 
-      return new Response(xml, {
+      const response = new Response(xml, {
         status: 200,
         headers: {
           'Content-Type': 'application/xml; charset=utf-8',
-          // ۳. کش لبه هوشمند با قابلیت استفاده از کش در زمان خطا یا بازتولید در پس‌زمینه
-          'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=86400'
+          'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=86400',
+          'X-Sitemap-Mode': 'live',
+          'X-Sitemap-Urls': String(1 + articles.length + news.length),
         }
       });
       
+      // ذخیره نتیجه نهایی در Cache API کلادفلر
+      ctx.waitUntil(cache.put(cacheKey, response.clone()));
+      return response;
+      
     } catch (error) {
-      // در صورت خطای پیش‌بینی‌نشده، نسخه Fallback بازگردانده می‌شود تا ۵۰۰ نگیرد
-      return new Response(fallbackSitemap, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/xml; charset=utf-8',
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600'
-        }
-      });
+      // در صورت خطای پیش‌بینی‌نشده، نسخه Fallback بازگردانده می‌شود تا ۵۰۰ نگیرد (همراه با هدر لاگینگ)
+      const res = new Response(fallbackSitemap, { status: 200, headers: fallbackHeaders('error') });
+      ctx.waitUntil(cache.put(cacheKey, res.clone()));
+      return res;
     }
   }
 };

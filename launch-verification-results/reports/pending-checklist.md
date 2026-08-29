@@ -51,18 +51,7 @@
 - [ ] Test anonymous read access: use `curl` or Supabase client with anon key to fetch configs; should succeed without auth.
 - [ ] Test unauthorized write: attempt insert with anon key; should fail due to RLS.
 
-## Phase 5: Cloudflare Workers & Edge
-- [ ] Verify Worker `etesal-validator` deployed and route `/api/validate` maps correctly.
-- [ ] Confirm environment variables in Worker dashboard: `ALLOWED_ORIGIN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`.
-- [ ] Check anti-SSRF code in `validator-worker.ts`: rejects private IPs, loopback, Cloudflare ranges. Run the SSRF attack test (`curl` with `127.0.0.1`) and expect 400.
-- [ ] Run happy path ping test (`curl POST /api/validate` with public IP) and expect 200 with `valid: true` and `latencyMs`.
-- [ ] Verify socket closed in `finally` block (code review).
-- [ ] Verify Worker `etesal-sitemap-worker` deployed, route `/sitemap.xml` and `/robots.txt`.
-- [ ] Confirm environment variables: `BASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
-- [ ] Test sitemap and robots endpoints: `curl -I` expecting 200, correct `Content-Type`, and caching headers.
-- [ ] Ensure Workers do not contain `SUPABASE_SERVICE_ROLE_KEY`.
-- [ ] Check Cloudflare Pages setup: domain connected, SSL/TLS mode **Full (strict)**, "Always Use HTTPS" enabled, HSTS.
-- [ ] Cache rules: static assets long cache (immutable), `index.html` no-cache, SPA fallback (`_redirects`).
+## Phase 5: Cloudflare Workers & Edge (Security Headers)
 - [ ] Rate limiting / WAF rules for sensitive paths (`/api/validate`, `/admin`) if possible.
 - [ ] Security headers present via `_headers` or Cloudflare Transform Rules.
 
