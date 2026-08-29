@@ -1,0 +1,275 @@
+{
+  "name": "Etesal 4. News Ingestion (IR - Tech/AI)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "trigger-schedule",
+      "name": "1. Schedule (Every 2h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://digiato.com/feed"
+      },
+      "id": "rss-digiato",
+      "name": "2a. Digiato RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        360,
+        160
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.zoomit.ir/feed/"
+      },
+      "id": "rss-zoomit",
+      "name": "2b. Zoomit RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        360,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://hooshio.com/feed/"
+      },
+      "id": "rss-hooshio",
+      "name": "2c. Hooshio RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        360,
+        440
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst keywords = ['هوش مصنوعی', 'اینترنت', 'فیلترینگ', 'فیلتر', 'امنیت', 'تکنولوژی', 'سایبری', 'شبکه', 'گوگل', 'متا', 'تلگرام', 'اینستاگرام', 'واتساپ'];\n\nconst filtered = allItems.filter(item => {\n  const title = (item.json.title || '').toLowerCase();\n  const desc = (item.json.description || '').toLowerCase();\n  const combined = title + ' ' + desc;\n  return keywords.some(kw => combined.includes(kw));\n});\n\n// Get top 2 matching news to avoid overloading the AI limit per run\nreturn filtered.slice(0, 2).map(item => {\n  // Sanitize control characters that break JSON parsing\n  const rawTitle = (item.json.title || '').replace(/[\\n\\r\\t\"\\\\]/g, ' ');\n  const rawDesc = (item.json.description || item.json.contentSnippet || '').replace(/[\\n\\r\\t\"\\\\]/g, ' ');\n  return {\n    json: {\n      rawTitle,\n      rawLink: item.json.link,\n      rawDesc,\n      sourceName: item.json.link.includes('digiato') ? 'دیجیاتو' : item.json.link.includes('zoomit') ? 'زومیت' : 'هوشیو'\n    }\n  };\n});"
+      },
+      "id": "filter-tech-news",
+      "name": "3. Filter Tech & AI News",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.OPENROUTER_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  models: [\n    \"meta-llama/llama-3.3-70b-instruct:free\",\n    \"google/gemini-2.0-flash-exp:free\",\n    \"deepseek/deepseek-r1-0528:free\"\n  ],\n  provider: {\n    allow_fallbacks: true\n  },\n  temperature: 0.4,\n  max_tokens: 1500,\n  response_format: { type: \"json_object\" },\n  messages: [\n    {\n      role: \"system\",\n      content: \"شما یک سردبیر ارشد و متخصص سئو در حوزه فناوری هستید. وظیفه دارید خلاصه خبر دریافتی را به یک خبر کامل، دقیق و جذاب برای وبسایت تبدیل کنید.\\n\\nقوانین طلایی:\\n۱. **وفاداری به داده**: اگر متن ورودی خلاصه است، دقیقاً همان خلاصه را بسط دهید و از افزودن اطلاعات غیرموجود در متن ورودی (تخیل) اکیداً خودداری کنید. فقط حق توضیح اصطلاحات تخصصی را دارید.\\n۲. **یکتاسازی (سئو)**: محتوا را با تغییر ساختار جملات، مترادفسازی و تغییر ترتیب پاراگرافها بازنویسی کنید تا کپیبرداری محسوب نشود.\\n۳. **اصطلاحات فنی**: کلمات تخصصی مانند V2ray، MTProto، فیلترینگ، پروتکل و اسم شرکتها را **دقیقاً به همان شکل** در متن نگه دارید.\\n۴. **متا تگها**: meta_title و meta_description باید کاملاً به **زبان فارسی** و حداکثر ۶۰ و ۱۶۰ کاراکتر باشند.\\n\\nخروجی را فقط در قالب یک JSON معتبر برگردان:\\n{\\n  \\\"title\\\": \\\"تیتری جذاب، پرسشی یا عددی (حداکثر ۱۲ کلمه)\\\",\\n  \\\"slug\\\": \\\"نسخه انگلیسی کبابی-شده تیتر (مثلا internet-censorship-new-law)\\\",\\n  \\\"summary\\\": \\\"خلاصه ۲ خطی از متن که در صفحه لیست اخبار نشان داده میشود\\\",\\n  \\\"content\\\": \\\"متن کامل خبر با فرمت Markdown. حتماً از ## برای تیتر میانی و ### برای زیرتیترها استفاده کنید. پاراگرافها کوتاه و خوانا باشند.\\\",\\n  \\\"meta_title\\\": \\\"همان تیتر جذاب برای نمایش در گوگل\\\",\\n  \\\"meta_description\\\": \\\"یک جمله دعوتکننده و سئو شده برای کلیک در نتایج جستجو\\\"\\n}\"\n    },\n    {\n      role: \"user\",\n      content: \"تیتر اصلی: \" + ($json.rawTitle || \"\") + \"\\n\\nمتن خبر/خلاصه: \" + ($json.rawDesc || \"\")\n    }\n  ]\n}) }}",
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "id": "openrouter-rewrite",
+      "name": "4. Rewrite & SEO (OpenRouter)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const itemIndex = $itemIndex;\nconst rawItem = $items(\"3. Filter Tech & AI News\")[itemIndex]?.json || $items(\"3. Filter Tech & AI News\")[0]?.json || {};\n\nlet aiRes = null;\ntry {\n  const contentRaw = $json.choices?.[0]?.message?.content || '{}';\n  aiRes = JSON.parse(contentRaw);\n} catch (e) {\n  aiRes = null;\n}\n\nif (!aiRes || !aiRes.title) {\n  const fallbackTitle = rawItem.rawTitle || 'خبر جدید فناوری و اینترنت';\n  const fallbackDesc = rawItem.rawDesc || 'مشروح خبر فناوری و ارتباطات در اتصال هاب';\n  aiRes = {\n    title: fallbackTitle,\n    slug: '',\n    summary: fallbackDesc.slice(0, 160),\n    content: (rawItem.rawDesc || fallbackDesc) + '\\n\\n' + 'این خبر به صورت مستقیم و خودکار از پایگاه خبری بازنشر گردیده است.',\n    meta_title: fallbackTitle.slice(0, 60),\n    meta_description: fallbackDesc.slice(0, 160)\n  };\n}\n\n// Robust deterministic slug generation using Title + Source\nconst cleanTitle = (aiRes.title || rawItem.rawTitle || 'news').trim();\nconst sourceIdentifier = (rawItem.sourceName || 'ir').trim();\nconst combinedForHash = (cleanTitle + '|' + sourceIdentifier).toLowerCase();\n\nlet hash = 0;\nfor (let i = 0; i < combinedForHash.length; i++) {\n  hash = ((hash << 5) - hash) + combinedForHash.charCodeAt(i);\n  hash |= 0;\n}\nconst hashString = Math.abs(hash).toString(36);\n\nlet baseSlug = (aiRes.slug || cleanTitle)\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/(^-|-$)/g, '');\n\nif (!baseSlug || baseSlug.length < 3) {\n  baseSlug = 'tech-news';\n}\n\nconst finalSlug = (baseSlug.substring(0, 45) + '-' + hashString).replace(/--+/g, '-');\n\n// Append SEO Source\nconst sourceName = rawItem.sourceName || 'منبع معتبر';\nconst sourceLink = rawItem.rawLink || 'https://etesal.aetherai.ir';\nconst finalContent = (aiRes.content || rawItem.rawDesc || '') + '\\n\\n---\\n🌐 **منبع اصلی خبر:** [' + sourceName + '](' + sourceLink + ')';\n\nreturn [{\n  json: {\n    title: aiRes.title || cleanTitle,\n    slug: finalSlug,\n    summary: aiRes.summary || (rawItem.rawDesc || '').slice(0, 160),\n    content: finalContent,\n    meta_title: (aiRes.meta_title || aiRes.title || cleanTitle).slice(0, 60),\n    meta_description: (aiRes.meta_description || aiRes.summary || '').slice(0, 160),\n    image_url: null,\n    is_published: true,\n    published_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "format-news-data",
+      "name": "5. Format Final Output & Source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.SUPABASE_URL }}/rest/v1/news?on_conflict=slug",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates, return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
+        "options": {
+          "timeout": 15000,
+          "retry": {
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "id": "supabase-insert-news",
+      "name": "6. Insert to Supabase DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        300
+      ],
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "1. Schedule (Every 2h)": {
+      "main": [
+        [
+          {
+            "node": "2a. Digiato RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2b. Zoomit RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2c. Hooshio RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2a. Digiato RSS": {
+      "main": [
+        [
+          {
+            "node": "3. Filter Tech & AI News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2b. Zoomit RSS": {
+      "main": [
+        [
+          {
+            "node": "3. Filter Tech & AI News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2c. Hooshio RSS": {
+      "main": [
+        [
+          {
+            "node": "3. Filter Tech & AI News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Filter Tech & AI News": {
+      "main": [
+        [
+          {
+            "node": "4. Rewrite & SEO (OpenRouter)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Rewrite & SEO (OpenRouter)": {
+      "main": [
+        [
+          {
+            "node": "5. Format Final Output & Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Format Final Output & Source": {
+      "main": [
+        [
+          {
+            "node": "6. Insert to Supabase DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

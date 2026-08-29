@@ -1,4 +1,6 @@
+const fs = require('fs');
 
+const guardCode = `
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Lock, ArrowRight, KeyRound, AlertTriangle, Eye, EyeOff, CheckCircle2, Mail } from 'lucide-react';
 import { verifyAdminPasscode, checkAdminSessionAsync, terminateAdminSession } from '../../services/adminSecurityService';
@@ -194,3 +196,6 @@ export const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children, onEx
     </div>
   );
 };
+`;
+
+fs.writeFileSync('src/components/auth/AdminRouteGuard.tsx', guardCode);

@@ -1,4 +1,10 @@
+const fs = require('fs');
 
+let authCode = fs.readFileSync('src/services/authService.ts', 'utf8');
+
+authCode = authCode.replace(/transactions/g, 'walletTransactions'); // undo my mistake if any
+
+authCode = `
 import { User, WalletTransaction } from '../types';
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 import { INITIAL_TRANSACTIONS } from './walletService';
@@ -14,7 +20,7 @@ export interface AuthResponse {
 
 export function deriveAuthEmail(username: string): string {
   const clean = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-  return `${clean}@user.etesal.internal`;
+  return \`\${clean}@user.etesal.internal\`;
 }
 
 export function createDefaultUserStructure(userId: string, username: string, email: string = ''): User {
@@ -115,12 +121,17 @@ export async function logoutUser(): Promise<void> {
   }
 }
 
-export function updateRecoveryEmail(user: User, email: string): User {
+export function updateRecoveryEmail(email: string): boolean {
   try {
-    const updatedUser = { ...user, recoveryEmail: email };
-    saveLocalSession(updatedUser);
-    return updatedUser;
+    const currentSession = getSavedLocalSession();
+    if (!currentSession) return false;
+    currentSession.recoveryEmail = email;
+    saveLocalSession(currentSession);
+    return true;
   } catch {
-    return user;
+    return false;
   }
 }
+`;
+
+fs.writeFileSync('src/services/authService.ts', authCode);

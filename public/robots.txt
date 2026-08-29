@@ -13,4 +13,4 @@ Disallow: /*?*
 Crawl-delay: 1
 
 # Sitemap (Intercepted by Cloudflare Worker)
-Sitemap: https://etesal.aeherai.ir/sitemap.xml
+Sitemap: https://etesal.aetherai.ir/sitemap.xml

@@ -1,0 +1,168 @@
+{
+  "name": "Etesal 3. Telegram Viral Bot (Proxy Injector)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "channel_post"
+        ],
+        "additionalFields": {}
+      },
+      "id": "telegram-trigger",
+      "name": "1. Admin Sends Media to Bot",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        300
+      ],
+      "webhookId": "etesal-viral-bot-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message || $json.channel_post;\nif (!msg) return [];\n\n// Allowed admin IDs: from $vars.TELEGRAM_ADMIN_ID, plus hardcoded fallback 191750790\nconst envAdmin = ($vars.TELEGRAM_ADMIN_ID || '').toString().trim();\nconst allowedAdmins = ['191750790'];\nif (envAdmin) allowedAdmins.push(envAdmin);\n\nconst senderId = (msg.from?.id || msg.chat?.id || '').toString();\n\nif (!allowedAdmins.includes(senderId)) {\n  return []; \n}\n\nreturn [{ json: { message: msg } }];"
+      },
+      "id": "security-filter",
+      "name": "2. Filter (Only Accept Admin)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $vars.SUPABASE_URL }}/rest/v1/proxies?is_active=eq.true&order=created_at.desc&limit=3",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000,
+          "retry": {
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "id": "fetch-proxies",
+      "name": "3. Get 3 Fresh Proxies from DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "alwaysOutputData": true,
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalMsg = $items(\"2. Filter (Only Accept Admin)\")[0].json.message;\nconst dbItems = $input.all();\n\n// Extract text/caption\nlet originalText = originalMsg.text || originalMsg.caption || '';\n\n// Build valid MTProto proxy links (tg://proxy?server=...&port=...&secret=...)\nconst validProxyLinks = [];\nfor (const item of dbItems) {\n  const p = item.json;\n  if (p && p.host && p.port && p.secret) {\n    const proxyUrl = `https://t.me/proxy?server=${encodeURIComponent(p.host)}&port=${p.port}&secret=${encodeURIComponent(p.secret)}`;\n    validProxyLinks.push(`<a href=\"${proxyUrl}\">⚡ پروکسی اختصاصی</a>`);\n  }\n}\n\nlet finalCaption = originalText;\nif (validProxyLinks.length > 0) {\n  const anchorTexts = validProxyLinks.join(' | ');\n  finalCaption = `${originalText}\\n\\n${anchorTexts}\\n\\n🌐 <a href=\"https://etesal.aetherai.ir\">etesal.aetherai.ir</a>\\n🆔 @vpnbuying`;\n} else {\n  finalCaption = `${originalText}\\n\\n🌐 <a href=\"https://etesal.aetherai.ir\">etesal.aetherai.ir</a>\\n🆔 @vpnbuying`;\n}\n\nreturn [{\n  json: {\n    ...originalMsg,\n    new_caption: finalCaption\n  }\n}];"
+      },
+      "id": "format-caption",
+      "name": "4. Append Proxy Anchors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $vars.TELEGRAM_BOT_TOKEN }}/copyMessage",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{ $vars.TELEGRAM_CHANNEL_ID }}\",\n  \"from_chat_id\": \"{{ $json.chat.id }}\",\n  \"message_id\": \"{{ $json.message_id }}\",\n  \"caption\": {{ JSON.stringify($json.new_caption || \"\") }},\n  \"parse_mode\": \"HTML\"\n}",
+        "options": {
+          "timeout": 15000,
+          "retry": {
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "id": "telegram-send",
+      "name": "5. Forward to Channel with New Caption",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "1. Admin Sends Media to Bot": {
+      "main": [
+        [
+          {
+            "node": "2. Filter (Only Accept Admin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Filter (Only Accept Admin)": {
+      "main": [
+        [
+          {
+            "node": "3. Get 3 Fresh Proxies from DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Get 3 Fresh Proxies from DB": {
+      "main": [
+        [
+          {
+            "node": "4. Append Proxy Anchors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Append Proxy Anchors": {
+      "main": [
+        [
+          {
+            "node": "5. Forward to Channel with New Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

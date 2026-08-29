@@ -5,7 +5,17 @@
 
 import { V2RayConfig, MtprotoProxy } from '../types';
 
-const CF_WORKER_URL = import.meta.env.VITE_CF_WORKER_API || 'https://etesal-validator.workers.dev';
+const getEnvVar = (key: string, fallback: string): string => {
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[key]) {
+    return (import.meta as any).env[key];
+  }
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key] as string;
+  }
+  return fallback;
+};
+
+const CF_WORKER_URL = getEnvVar('VITE_CF_WORKER_API', 'https://etesal-validator.workers.dev');
 
 export interface PingValidationResult {
   valid: boolean;

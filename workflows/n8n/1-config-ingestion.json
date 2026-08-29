@@ -1,0 +1,224 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8,12,16,20,0 * * *"
+            }
+          ]
+        }
+      },
+      "id": "48f7eca4-81ef-4f40-abf6-b8574a143a7a",
+      "name": "1. Schedule (5x Daily)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -464,
+        -672
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { url: \"https://t.me/s/v2rayng3\" } },\n  { json: { url: \"https://t.me/s/V2ray_Alpha\" } },\n  { json: { url: \"https://t.me/s/v2rayirane\" } }\n];"
+      },
+      "id": "6e305234-cb10-411f-ab75-7fb66528eac2",
+      "name": "2. Generate Massive Source Pool",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        -672
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "6fbab5a9-d9b2-48ae-93c9-7e0c893ed5b6",
+      "name": "3. Fetch HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        -672
+      ],
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet allHtml = items.map(item => item.json?.data || '').join(' ');\n\n// Decode HTML entities so config strings do not keep &amp; etc.\nlet prev;\ndo {\n  prev = allHtml;\n  allHtml = allHtml\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&#x2F;/g, '/');\n} while (allHtml !== prev);\n\nconst PROTOCOL_REGEX = /(vless:\\/\\/[^\\s<>\"\\'\\]]+|vmess:\\/\\/[^\\s<>\"\\'\\]]+|hysteria2?:\\/\\/[^\\s<>\"\\'\\]]+|hy2:\\/\\/[^\\s<>\"\\'\\]]+|trojan:\\/\\/[^\\s<>\"\\'\\]]+|ss:\\/\\/[^\\s<>\"\\'\\]]+)/gi;\n\nconst blocks = allHtml.split('tgme_widget_message_text');\nconst parsedConfigs = [];\n\nfor (const block of blocks) {\n  const links = block.match(PROTOCOL_REGEX);\n  if (!links) continue;\n\n  const rawText = block.replace(/<[^>]*>?/gm, ' ');\n\n  // Flag extraction\n  const flagMatch = rawText.match(/[\\uD83C][\\uDDE6-\\uDDFF][\\uD83C][\\uDDE6-\\uDDFF]/);\n  const flag = flagMatch ? flagMatch[0] : '🌐';\n\n  // Location extraction\n  let location = 'جهانی';\n  let countryCode = 'ALL';\n  const locMatch = rawText.match(/(آلمان|هلند|فنلاند|آمریکا|انگلیس|فرانسه|سوئد|ترکیه|روسیه|امارات|سنگاپور|کانادا|لهستان|سوئیس|ایتالیا)/);\n  if (locMatch) {\n    location = locMatch[1];\n    const codeMap = {\n      'آلمان': 'DE', 'هلند': 'NL', 'فنلاند': 'FI', 'آمریکا': 'US', 'انگلیس': 'GB',\n      'فرانسه': 'FR', 'سوئد': 'SE', 'ترکیه': 'TR', 'روسیه': 'RU', 'امارات': 'AE',\n      'سنگاپور': 'SG', 'کانادا': 'CA', 'لهستان': 'PL', 'سوئیس': 'CH', 'ایتالیا': 'IT'\n    };\n    countryCode = codeMap[location] || 'ALL';\n  }\n\n  // Operator extraction\n  let operator = 'all';\n  if (rawText.match(/(mci|همراه|mci_|@mci|#mci)/i)) operator = 'mci';\n  else if (rawText.match(/(irancell|ایرانسل|mtn|#mtn)/i)) operator = 'irancell';\n  else if (rawText.match(/(rightel|رایتل|#rightel)/i)) operator = 'rightel';\n  else if (rawText.match(/(wifi|وایفای|مخابرات|شاتل|زیتل|#wifi)/i)) operator = 'wifi';\n\n  for (const link of links) {\n    let protocol = 'vless';\n    if (link.startsWith('vmess://')) protocol = 'vmess';\n    else if (link.startsWith('hysteria') || link.startsWith('hy2')) protocol = 'hysteria2';\n    else if (link.startsWith('trojan://')) protocol = 'trojan';\n    else if (link.startsWith('ss://')) protocol = 'ss';\n\n    let name = `${flag} ${protocol.toUpperCase()} - ${location}`;\n    if (operator !== 'all') {\n      const opName = operator === 'mci' ? 'همراه اول' : operator === 'irancell' ? 'ایرانسل' : operator === 'rightel' ? 'رایتل' : 'وای‌فای';\n      name += ` (${opName})`;\n    }\n\n    parsedConfigs.push({\n      config_string: link,\n      protocol: protocol,\n      name: name,\n      operator: operator,\n      location: location,\n      flag: flag,\n      country_code: countryCode,\n      quality: 'good',\n      is_official: true,\n      is_active: true,\n      is_vip: false\n    });\n  }\n}\n\n// Deduplicate configs by config_string\nconst seen = new Set();\nconst unique = [];\nfor (const c of parsedConfigs) {\n  if (!seen.has(c.config_string)) {\n    seen.add(c.config_string);\n    unique.push(c);\n  }\n}\n\nreturn unique.slice(0, 6).map(c => ({ json: c }));"
+      },
+      "id": "b48a3abb-4073-4407-aad5-30d427900e74",
+      "name": "4. Parse HTML & Dynamic Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        -672
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.SUPABASE_URL }}/rest/v1/configs?on_conflict=config_string",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates, return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
+        "options": {}
+      },
+      "id": "63311ed8-4fb3-4d75-9f62-68d24f14628e",
+      "name": "7. Insert New to DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        736,
+        -672
+      ],
+      "executeOnce": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (!items || items.length === 0) {\n  return [];\n}\n// Filter out any items without config_string just in case\nconst validItems = items.filter(i => i.json && i.json.config_string);\nreturn validItems.slice(0, 3);"
+      },
+      "id": "9053e0c9-f72d-4d90-bbdc-20f980ef7142",
+      "name": "8. Limit to 3 for Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        -672
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $vars.TELEGRAM_BOT_TOKEN }}/sendMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{ $vars.TELEGRAM_CHANNEL_ID }}\",\n  \"text\": \"🚀 <b>کانفیگ پرسرعت اختصاصی اتصال هاب</b>\\n\\n🏷️ <b>نام:</b> {{ $json.name }}\\n🌐 <b>پروتکل:</b> <code>{{ $json.protocol }}</code>\\n📡 <b>اپراتور:</b> <code>{{ $json.operator }}</code>\\n📍 <b>لوکیشن:</b> {{ $json.flag }} {{ $json.location }}\\n\\n📋 <b>لینک اتصال (جهت کپی روی متن ضربه بزنید):</b>\\n<pre>{{ $json.config_string }}</pre>\\n\\n⚡ <b>دریافت کانفیگ‌های زنده بیشتر و وب‌اپلیکیشن:</b>\\n🔗 <a href=\\\"https://etesal.aetherai.ir\\\">etesal.aetherai.ir</a>\\n🆔 @vpnbuying\",\n  \"parse_mode\": \"HTML\",\n  \"disable_web_page_preview\": true\n}",
+        "options": {}
+      },
+      "id": "c51e06bc-9f55-4fcd-a47f-03ec562ac8fb",
+      "name": "9. Broadcast to Channel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1136,
+        -672
+      ],
+      "retryOnFail": true
+    }
+  ],
+  "connections": {
+    "1. Schedule (5x Daily)": {
+      "main": [
+        [
+          {
+            "node": "2. Generate Massive Source Pool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Generate Massive Source Pool": {
+      "main": [
+        [
+          {
+            "node": "3. Fetch HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Fetch HTML": {
+      "main": [
+        [
+          {
+            "node": "4. Parse HTML & Dynamic Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Parse HTML & Dynamic Context": {
+      "main": [
+        [
+          {
+            "node": "7. Insert New to DB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "8. Limit to 3 for Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8. Limit to 3 for Telegram": {
+      "main": [
+        [
+          {
+            "node": "9. Broadcast to Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "51545002252b44501c9ca0ee502e016b2ddf3c04a2e95f2478721b19136e749e"
+  }
+}

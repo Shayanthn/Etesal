@@ -1,28 +1,6 @@
-
+const fs = require('fs');
+const code = `
 import { getSupabase } from './supabaseClient';
-
-/**
- * Calculates SHA-256 hash of a string (useful for password hashing, token validation, and checksums)
- */
-export async function calculateSha256(input: string): Promise<string> {
-  const cleanInput = (input || '').trim();
-  const encoder = new TextEncoder();
-  const data = encoder.encode(cleanInput);
-  
-  if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-  
-  // Node.js fallback
-  try {
-    const cryptoModule = await import('node:crypto');
-    return cryptoModule.createHash('sha256').update(Buffer.from(data)).digest('hex');
-  } catch {
-    return '';
-  }
-}
 
 /**
  * Validates admin password via Supabase Auth
@@ -85,3 +63,5 @@ export async function terminateAdminSession(): Promise<void> {
     await supabase.auth.signOut();
   }
 }
+`;
+fs.writeFileSync('src/services/adminSecurityService.ts', code);

@@ -1,0 +1,166 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "id": "204a03cb-b852-4266-a318-30476c69f7f8",
+      "name": "1. Schedule (Every 12 Hours)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { url: \"https://t.me/s/Proxy_Qavi\" } },\n  { json: { url: \"https://t.me/s/iMTProto\" } },\n  { json: { url: \"https://t.me/s/iRoProxy\" } },\n  { json: { url: \"https://t.me/s/TelMTProto\" } },\n  { json: { url: \"https://t.me/s/ProxyMTProto\" } },\n  { json: { url: \"https://t.me/s/Myporoxy\" } },\n  { json: { url: \"https://t.me/s/ProxyHagh\" } }\n];"
+      },
+      "id": "f3d2b3ad-c938-471e-8a73-7b606ac2a07d",
+      "name": "2. Generate Source URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "8116d443-f9c2-4861-8304-ce375d1ae6cf",
+      "name": "3. Fetch HTML from Channels",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        -320
+      ],
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst allProxies = [];\n\nfor (const item of items) {\n  let html = '';\n  if (typeof item.json?.data === 'string') html = item.json.data;\n  else if (typeof item.json === 'string') html = item.json;\n  else if (typeof item.json?.body === 'string') html = item.json.body;\n  else html = JSON.stringify(item.json || '');\n\n  // Recursively decode HTML entities (handles &amp;amp; from t.me/s pages)\n  let prev;\n  do {\n    prev = html;\n    html = html\n      .replace(/&amp;/g, '&')\n      .replace(/&lt;/g, '<')\n      .replace(/&gt;/g, '>')\n      .replace(/&quot;/g, '\"')\n      .replace(/&#39;/g, \"'\")\n      .replace(/&#x2F;/g, '/');\n  } while (html !== prev);\n\n  // Collect proxy links (t.me/proxy and tg://proxy)\n  const linkRegex = /(?:https?:\\/\\/t\\.me\\/|tg:\\/\\/)proxy\\?[^\\s<>\"\\']+/gi;\n  const matches = html.match(linkRegex) || [];\n\n  for (const link of matches) {\n    // Regex-based param extraction (URL constructor is unavailable in the Code sandbox)\n    const serverMatch = link.match(/[?&](?:server|ip)=([^&]+)/i);\n    const portMatch = link.match(/[?&]port=([^&]+)/i);\n    const secretMatch = link.match(/[?&](?:secret|pass)=([^&]+)/i);\n\n    if (!serverMatch || !portMatch || !secretMatch) continue;\n\n    const host = decodeURIComponent(serverMatch[1]);\n    const port = parseInt(portMatch[1], 10);\n    const secret = decodeURIComponent(secretMatch[1]);\n\n    if (host && !isNaN(port) && port > 0 && secret) {\n      allProxies.push({\n        name: 'MTProto Proxy ' + host,\n        host: host,\n        port: port,\n        secret: secret,\n        location: 'درحال بررسی',\n        flag: '🌐',\n        country_code: 'ALL',\n        is_active: true\n      });\n    }\n  }\n}\n\n// Deduplicate by host:port\nconst uniqueProxies = [];\nconst seen = new Set();\nfor (const p of allProxies) {\n  const key = p.host + ':' + p.port;\n  if (!seen.has(key)) {\n    seen.add(key);\n    uniqueProxies.push(p);\n  }\n}\n\nreturn [{\n  json: {\n    bulk: uniqueProxies,\n    count: uniqueProxies.length\n  }\n}];"
+      },
+      "id": "daa155a8-4126-427e-9056-ecd6264b408a",
+      "name": "4. Parse & Normalize Proxies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.SUPABASE_URL }}/rest/v1/proxies?on_conflict=host,port",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates, return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.bulk) }}",
+        "options": {}
+      },
+      "id": "f2e8951f-a459-49a7-9425-6e6958c02efa",
+      "name": "7. Insert New to DB1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        944,
+        -320
+      ],
+      "retryOnFail": true
+    }
+  ],
+  "connections": {
+    "1. Schedule (Every 12 Hours)": {
+      "main": [
+        [
+          {
+            "node": "2. Generate Source URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Generate Source URLs": {
+      "main": [
+        [
+          {
+            "node": "3. Fetch HTML from Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Fetch HTML from Channels": {
+      "main": [
+        [
+          {
+            "node": "4. Parse & Normalize Proxies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Parse & Normalize Proxies": {
+      "main": [
+        [
+          {
+            "node": "7. Insert New to DB1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "51545002252b44501c9ca0ee502e016b2ddf3c04a2e95f2478721b19136e749e"
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "name": "Etesal 5. News Ingestion (Global)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 */3 * *"
+            }
+          ]
+        }
+      },
+      "id": "trigger-schedule",
+      "name": "1. Schedule (Every 3 Days)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.cloudflare.com/rss/"
+      },
+      "id": "rss-cloudflare",
+      "name": "2a. Cloudflare Blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        360,
+        160
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.bleepingcomputer.com/feed/"
+      },
+      "id": "rss-bleeping",
+      "name": "2b. BleepingComputer",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        360,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.feedburner.com/TheHackersNews"
+      },
+      "id": "rss-hackernews",
+      "name": "2c. The Hacker News",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        360,
+        440
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst keywords = ['vpn', 'security', 'ai', 'censorship', 'firewall', 'cyber', 'network', 'telegram', 'encryption', 'malware', 'hack'];\n\nconst filtered = allItems.filter(item => {\n  const title = (item.json.title || '').toLowerCase();\n  const desc = (item.json.description || '').toLowerCase();\n  const combined = title + ' ' + desc;\n  return keywords.some(kw => combined.includes(kw));\n});\n\n// Get top 2 matching news\nreturn filtered.slice(0, 2).map(item => {\n  // Sanitize control characters that break JSON parsing\n  const rawTitle = (item.json.title || '').replace(/[\\n\\r\\t\"\\\\]/g, ' ');\n  const rawDesc = (item.json.description || item.json.contentSnippet || '').replace(/[\\n\\r\\t\"\\\\]/g, ' ');\n  return {\n    json: {\n      rawTitle,\n      rawLink: item.json.link,\n      rawDesc,\n      sourceName: item.json.link.includes('cloudflare') ? 'Cloudflare Blog' : item.json.link.includes('bleeping') ? 'Bleeping Computer' : 'The Hacker News'\n    }\n  };\n});"
+      },
+      "id": "filter-tech-news-global",
+      "name": "3. Filter Global Tech News",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.OPENROUTER_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  models: [\n    \"meta-llama/llama-3.3-70b-instruct:free\",\n    \"google/gemini-2.0-flash-exp:free\",\n    \"deepseek/deepseek-r1-0528:free\"\n  ],\n  provider: {\n    allow_fallbacks: true\n  },\n  temperature: 0.3,\n  max_tokens: 1500,\n  response_format: { type: \"json_object\" },\n  messages: [\n    {\n      role: \"system\",\n      content: \"You are a senior bilingual (English-Persian) tech journalist and SEO expert.\\n\\nInstructions:\\n1. **Translation Quality**: Translate the provided English news summary into fluent, native, and formal Persian (Farsi). Avoid literal translations.\\n2. **Technical Terms**: Keep all technical terms, company names (e.g., Google, Microsoft, Cloudflare), protocol names (HTTP/3, QUIC), and security vulnerabilities (CVE codes) **exactly in English** inside the Persian text (e.g., \\\"Cloudflare اعلام کرد...\\\").\\n3. **Content Expansion**: The input is often just a snippet. You are allowed to explain and expand the summary into a 300-400 word comprehensive article based strictly on verified technical context. Do NOT invent specific dates, financial numbers, or quotes.\\n4. **Markdown Structure**: The final Persian content must have a clear hierarchy using H2 (`##`) and H3 (`###`). Separate introduction, body, and conclusion.\\n5. **SEO Metadata**: The `title`, `meta_title`, and `meta_description` must be in **Persian**, but the `slug` must be an English kebab-case derived from the title.\\n\\nReturn ONLY valid JSON with these exact keys:\\n{\\n  \\\"title\\\": \\\"Persian Title (engaging, problem-solution style)\\\",\\n  \\\"slug\\\": \\\"english-kebab-case-slug\\\",\\n  \\\"summary\\\": \\\"A 2-line Persian summary for the main page\\\",\\n  \\\"content\\\": \\\"Full Persian Markdown article (use ## and ###)\\\",\\n  \\\"meta_title\\\": \\\"Persian Meta Title (under 60 chars)\\\",\\n  \\\"meta_description\\\": \\\"Persian compelling description (under 160 chars)\\\"\\n}\"\n    },\n    {\n      role: \"user\",\n      content: \"Title: \" + ($json.rawTitle || \"\") + \"\\n\\nSummary/Content: \" + ($json.rawDesc || \"\")\n    }\n  ]\n}) }}",
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "id": "openrouter-translate",
+      "name": "4. Translate & Rewrite (OpenRouter)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const itemIndex = $itemIndex;\nconst rawItem = $items(\"3. Filter Global Tech News\")[itemIndex]?.json || $items(\"3. Filter Global Tech News\")[0]?.json || {};\n\nlet aiRes = null;\ntry {\n  const contentRaw = $json.choices?.[0]?.message?.content || '{}';\n  aiRes = JSON.parse(contentRaw);\n} catch (e) {\n  aiRes = null;\n}\n\nif (!aiRes || !aiRes.title) {\n  const fallbackTitle = (rawItem.rawTitle || 'تحولات امنیت سایبری و شبکه').slice(0, 80);\n  const fallbackDesc = rawItem.rawDesc || 'گزارش تحلیلی پیرامون فناوری و امنیت اینترنت';\n  aiRes = {\n    title: fallbackTitle,\n    slug: '',\n    summary: fallbackDesc.slice(0, 160),\n    content: (rawItem.rawDesc || fallbackDesc) + '\\n\\n' + 'این گزارش از منابع بین‌المللی فناوری استخراج شده است.',\n    meta_title: fallbackTitle.slice(0, 60),\n    meta_description: fallbackDesc.slice(0, 160)\n  };\n}\n\n// Clean and sanitize slug\nconst cleanTitle = (aiRes.title || rawItem.rawTitle || 'global-news').trim();\nconst sourceIdentifier = (rawItem.sourceName || 'global').trim();\nconst combinedForHash = (cleanTitle + '|' + sourceIdentifier).toLowerCase();\n\nlet hash = 0;\nfor (let i = 0; i < combinedForHash.length; i++) {\n  hash = ((hash << 5) - hash) + combinedForHash.charCodeAt(i);\n  hash |= 0;\n}\nconst hashString = Math.abs(hash).toString(36);\n\nlet baseSlug = (aiRes.slug || cleanTitle)\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/(^-|-$)/g, '');\n\nif (!baseSlug || baseSlug.length < 3) {\n  baseSlug = 'global-security-news';\n}\n\nconst finalSlug = (baseSlug.substring(0, 45) + '-' + hashString).replace(/--+/g, '-');\n\n// Append SEO Source\nconst sourceName = rawItem.sourceName || 'منبع بین‌المللی';\nconst sourceLink = rawItem.rawLink || 'https://etesal.aetherai.ir';\nconst finalContent = (aiRes.content || rawItem.rawDesc || '') + '\\n\\n---\\n🌐 **منبع اصلی خبر:** [' + sourceName + '](' + sourceLink + ')';\n\nreturn [{\n  json: {\n    title: aiRes.title || cleanTitle,\n    slug: finalSlug,\n    summary: aiRes.summary || (rawItem.rawDesc || '').slice(0, 160),\n    content: finalContent,\n    meta_title: (aiRes.meta_title || aiRes.title || cleanTitle).slice(0, 60),\n    meta_description: (aiRes.meta_description || aiRes.summary || '').slice(0, 160),\n    image_url: null,\n    is_published: true,\n    published_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "format-news-data-global",
+      "name": "5. Format Final Output & Source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.SUPABASE_URL }}/rest/v1/news?on_conflict=slug",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $vars.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates, return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
+        "options": {
+          "timeout": 15000,
+          "retry": {
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+          }
+        }
+      },
+      "id": "supabase-insert-news-global",
+      "name": "6. Insert to Supabase DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        300
+      ],
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "1. Schedule (Every 3 Days)": {
+      "main": [
+        [
+          {
+            "node": "2a. Cloudflare Blog",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2b. BleepingComputer",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2c. The Hacker News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2a. Cloudflare Blog": {
+      "main": [
+        [
+          {
+            "node": "3. Filter Global Tech News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2b. BleepingComputer": {
+      "main": [
+        [
+          {
+            "node": "3. Filter Global Tech News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2c. The Hacker News": {
+      "main": [
+        [
+          {
+            "node": "3. Filter Global Tech News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Filter Global Tech News": {
+      "main": [
+        [
+          {
+            "node": "4. Translate & Rewrite (OpenRouter)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Translate & Rewrite (OpenRouter)": {
+      "main": [
+        [
+          {
+            "node": "5. Format Final Output & Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Format Final Output & Source": {
+      "main": [
+        [
+          {
+            "node": "6. Insert to Supabase DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -277,17 +277,17 @@ FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE OR REPLACE FUNCTION public.purge_expired_nodes_and_media()
 RETURNS void AS $$
 BEGIN
-    -- ۱. حذف کانفیگ‌های منقضی‌شده یا غیرفعال بیش از ۴۸ ساعت
-    DELETE FROM public.configs 
-    WHERE (expires_at IS NOT NULL AND expires_at < NOW()) 
-       OR (is_active = false AND updated_at < NOW() - INTERVAL '48 hours');
+    -- ۱. غیرفعال‌سازی (Soft Delete) کانفیگ‌های منقضی‌شده به جای حذف فیزیکی
+    UPDATE public.configs 
+    SET is_active = false, updated_at = NOW()
+    WHERE (expires_at IS NOT NULL AND expires_at < NOW() AND is_active = true);
 
-    -- ۲. حذف پروکسی‌های منقضی‌شده یا مرده بیش از ۴۸ ساعت
-    DELETE FROM public.proxies
-    WHERE (expires_at IS NOT NULL AND expires_at < NOW())
-       OR (is_active = false AND updated_at < NOW() - INTERVAL '48 hours');
+    -- ۲. غیرفعال‌سازی (Soft Delete) پروکسی‌های منقضی‌شده به جای حذف فیزیکی
+    UPDATE public.proxies
+    SET is_active = false, updated_at = NOW()
+    WHERE (expires_at IS NOT NULL AND expires_at < NOW() AND is_active = true);
 
-    -- ۳. حذف رسانه‌های منتشرشده ۲۴ ساعت پس از انتشار
+    -- ۳. حذف رسانه‌های منتشرشده ۲۴ ساعت پس از انتشار (تغییری نکرد)
     DELETE FROM public.telegram_media_queue 
     WHERE status = 'published' AND purge_after IS NOT NULL AND purge_after < NOW();
 END;
