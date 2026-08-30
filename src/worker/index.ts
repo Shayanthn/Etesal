@@ -1,5 +1,5 @@
 export default {
-  async fetch(request: Request, env: any, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
     // This is a fallback handler. Static assets in ./dist/ are served automatically by Cloudflare Workers.
     // If a request reaches here, it means no static asset was found (e.g. an SPA route).
     // We can fallback to index.html using the ASSETS binding if it exists.
