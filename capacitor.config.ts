@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
   appName: 'اتصال | Etesal',
   webDir: 'dist',
   server: {
+    allowNavigation: ["etesal.aetherai.ir"],
     androidScheme: 'https',
     cleartext: false
   },

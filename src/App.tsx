@@ -37,7 +37,8 @@ import { NewsDetailPage } from './modules/news/NewsDetailPage';
 import { ArticleDetailPage } from './modules/articles/ArticleDetailPage';
 import { AuthModal } from './modules/auth/AuthModal';
 import { UserDashboard } from './modules/dashboard/UserDashboard';
-import { MasterAdminDashboard } from './modules/admin/MasterAdminDashboard';
+import { Suspense, lazy } from 'react';
+const MasterAdminDashboard = lazy(() => import('./modules/admin/MasterAdminDashboard').then(m => ({ default: m.MasterAdminDashboard })));
 import { AdminRouteGuard } from './components/auth/AdminRouteGuard';
 import { ToastContainer } from './modules/feedback/ToastContainer';
 import { NewsArticle } from './types/news';
@@ -326,13 +327,15 @@ export const App: React.FC = () => {
               });
             }}
           >
-            <MasterAdminDashboard
-              onShowToast={addToast}
-              onExitAdmin={() => {
-                window.history.pushState({}, '', '/');
-                setCurrentView('home');
-              }}
-            />
+            <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 dir-rtl relative"><div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin" /></div>}>
+              <MasterAdminDashboard
+                onShowToast={addToast}
+                onExitAdmin={() => {
+                  window.history.pushState({}, '', '/');
+                  setCurrentView('home');
+                }}
+              />
+            </Suspense>
           </AdminRouteGuard>
         </main>
       ) : currentView === 'download' ? (

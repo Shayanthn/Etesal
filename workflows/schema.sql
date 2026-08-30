@@ -43,21 +43,25 @@ CREATE TRIGGER trg_profiles_updated_at
 BEFORE UPDATE ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
--- تریگر جلوگیری از تغییر نقش توسط کاربران غیر ادمین (جلوگیری از Privilege Escalation)
-CREATE OR REPLACE FUNCTION public.prevent_role_change_by_non_admin()
+-- تریگر جلوگیری از تغییر نقش و موجودی کیف پول توسط کاربران غیر ادمین (جلوگیری از Privilege Escalation & Financial Fraud)
+CREATE OR REPLACE FUNCTION public.prevent_sensitive_profile_changes()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.role <> OLD.role AND NOT public.is_admin() THEN
         RAISE EXCEPTION 'Only admins can change user roles';
+    END IF;
+    IF NEW.wallet_balance <> OLD.wallet_balance AND NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Only admins can change wallet balance';
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trg_prevent_role_change ON public.profiles;
-CREATE TRIGGER trg_prevent_role_change
-BEFORE UPDATE OF role ON public.profiles
-FOR EACH ROW EXECUTE FUNCTION public.prevent_role_change_by_non_admin();
+DROP TRIGGER IF EXISTS trg_prevent_sensitive_profile_changes ON public.profiles;
+CREATE TRIGGER trg_prevent_sensitive_profile_changes
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW EXECUTE FUNCTION public.prevent_sensitive_profile_changes();
 
 -- تریگر ایجاد پروفایل خودکار هنگام ثبت‌نام در Supabase Auth
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
@@ -316,7 +320,7 @@ ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 -- ----------------------------------------------------------------------------
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles 
-FOR SELECT USING (true);
+FOR SELECT USING (id = auth.uid() OR public.is_admin());
 
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles 

@@ -1,6 +1,27 @@
-name = "etesal"
-compatibility_date = "2026-08-29"
+name = "etesal-hub"
+compatibility_date = "2024-03-20"
+main = "src/worker/index.ts"
 
+# Enable SPA routing fallback natively in wrangler 3+
 [assets]
 directory = "./dist/"
-not_found_handling = "single-page-application"
+binding = "ASSETS"
+
+# Explicitly set workers configuration
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"
+
+[env.production]
+name = "etesal-hub-prod"
+# Add your custom domains here
+# routes = [ { pattern = "etesal.aetherai.ir", custom_domain = true } ]
+
+# Define placeholder vars for security context
+[vars]
+ALLOWED_ORIGIN = "https://etesal.aetherai.ir"
+TELEGRAM_WEBHOOK_SECRET = ""
+# SUPABASE_URL = ""
+# SUPABASE_ANON_KEY = ""

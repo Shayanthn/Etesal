@@ -26,13 +26,12 @@ export interface TicketOperationResult {
  * Generate cryptographic human-friendly ticket tracking code (e.g. TCK-A1B2C3D4E5F6)
  */
 export function generateTicketCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = 'TCK-';
-  // 12-16 random secure chars
-  for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  // Use crypto for cryptographically secure, unguessable ticket codes
+  // We remove hyphens and take 24 chars, total length 28 (fits in VARCHAR(30))
+  const uuid = typeof crypto !== 'undefined' && crypto.randomUUID 
+    ? crypto.randomUUID() 
+    : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15); // Fallback
+  return 'TCK-' + uuid.replace(/-/g, '').substring(0, 24).toUpperCase();
 }
 
 /**

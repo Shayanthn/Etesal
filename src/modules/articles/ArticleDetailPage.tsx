@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { Helmet } from 'react-helmet-async';
 import { 
   ArrowLeft, 
@@ -151,7 +152,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
       {/* Article Content */}
       <div className="p-6 md:p-10 rounded-3xl bg-slate-900/40 border border-slate-800/80">
         <div className="prose prose-invert prose-slate max-w-none prose-headings:text-white prose-a:text-purple-400 hover:prose-a:text-purple-300 prose-img:rounded-2xl prose-hr:border-slate-800 leading-loose">
-          <div dangerouslySetInnerHTML={{ __html: article.content }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }} />
         </div>
       </div>
     </div>
