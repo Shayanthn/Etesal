@@ -42,7 +42,7 @@ import { AdminRouteGuard } from './components/auth/AdminRouteGuard';
 import { ToastContainer } from './modules/feedback/ToastContainer';
 import { NewsArticle } from './types/news';
 import { SAMPLE_NEWS_ARTICLES } from './data/newsData';
-import { getSavedLocalSession, logoutUser, saveLocalSession } from './services/authService';
+import { getSavedLocalSession, logoutUser, saveLocalSession, syncSessionWithSupabase } from './services/authService';
 import { fetchArticleBySlug } from './services/contentService';
 import { runBatchEdgePing } from './services/edgePingService';
 
@@ -89,6 +89,11 @@ export const App: React.FC = () => {
     if (savedUser) {
       setCurrentUser(savedUser);
     }
+    
+    // Sync with Supabase Auth state (especially for OAuth like Google)
+    const unsubscribeSync = syncSessionWithSupabase((user) => {
+      setCurrentUser(user);
+    });
 
     // Check initial pathname for standard SEO routing
     const path = window.location.pathname;
@@ -172,6 +177,7 @@ export const App: React.FC = () => {
     return () => {
       clearTimeout(timer);
       window.removeEventListener('popstate', handlePopState);
+      unsubscribeSync();
     };
   }, [currentUser]);
 

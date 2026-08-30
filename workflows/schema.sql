@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     username VARCHAR(100) UNIQUE NOT NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'vip', 'super_admin')),
     wallet_balance INTEGER DEFAULT 0,
+    recovery_email VARCHAR(255),
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

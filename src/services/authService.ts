@@ -92,6 +92,24 @@ export async function loginUser(username: string, passwordPlain: string): Promis
   }
 }
 
+export async function loginWithGoogle(): Promise<void> {
+  const supabase = getSupabase();
+  if (!isSupabaseConfigured() || !supabase) {
+    throw new Error('خطا: زیرساخت ابری متصل نیست.');
+  }
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin, // Redirects back to the current domain
+    }
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
 export function saveLocalSession(user: User): void {
   localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(user));
 }
@@ -105,6 +123,52 @@ export function getSavedLocalSession(): User | null {
   }
 }
 
+export function syncSessionWithSupabase(onUserUpdate: (user: User) => void): () => void {
+  const supabase = getSupabase();
+  if (!supabase) return () => {};
+
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      // Check if we already have this user in local storage to prevent unnecessary overwrites
+      const currentLocal = getSavedLocalSession();
+      if (currentLocal && currentLocal.id === session.user.id) {
+        onUserUpdate(currentLocal);
+        return;
+      }
+      
+      // We have a session but no local storage! Likely returned from Google OAuth
+      const email = session.user.email || '';
+      
+      // Let's get their profile from the database to get the real username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, role, wallet_balance, recovery_email')
+        .eq('id', session.user.id)
+        .single();
+
+      const username = profile?.username || session.user.user_metadata?.name || 'user';
+      
+      const userObj = createDefaultUserStructure(session.user.id, username, email);
+      
+      // Override with real DB data if available
+      if (profile) {
+        userObj.role = profile.role as 'user' | 'vip' | 'super_admin';
+        userObj.walletBalance = profile.wallet_balance || 0;
+        userObj.recoveryEmail = profile.recovery_email || undefined;
+      }
+
+      saveLocalSession(userObj);
+      onUserUpdate(userObj);
+    } else if (event === 'SIGNED_OUT') {
+      localStorage.removeItem(LOCAL_STORAGE_SESSION_KEY);
+    }
+  });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}
+
 export async function logoutUser(): Promise<void> {
   localStorage.removeItem(LOCAL_STORAGE_SESSION_KEY);
   const supabase = getSupabase();
@@ -115,8 +179,20 @@ export async function logoutUser(): Promise<void> {
   }
 }
 
-export function updateRecoveryEmail(user: User, email: string): User {
+export async function updateRecoveryEmail(user: User, email: string): Promise<User> {
   try {
+    const supabase = getSupabase();
+    if (supabase) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ recovery_email: email })
+        .eq('id', user.id);
+        
+      if (error) {
+        console.error('Failed to update recovery email in DB:', error);
+      }
+    }
+
     const updatedUser = { ...user, recoveryEmail: email };
     saveLocalSession(updatedUser);
     return updatedUser;
