@@ -176,7 +176,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({ onBackToHome, onShow
             {/* QR Code Graphic Generator via Public SVG API */}
             <div className="p-3 bg-white rounded-2xl shadow-md inline-block">
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://etesal.aeherai.ir/download')}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://etesal.aetherai.ir/download')}`}
                 alt="QR Code دانلود مستقیم اپلیکیشن اتصال"
                 className="w-36 h-36"
                 referrerPolicy="no-referrer"

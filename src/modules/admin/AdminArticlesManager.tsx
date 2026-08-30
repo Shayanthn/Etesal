@@ -152,7 +152,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({ onSh
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-2">پیوند یکتا (Slug)</label>
                 <div className="flex items-center gap-2 text-slate-500 text-sm">
-                  <span>etesal.aeherai.ir/article/</span>
+                  <span>etesal.aetherai.ir/article/</span>
                   <input
                     type="text"
                     value={slug}

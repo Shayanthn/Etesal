@@ -47,10 +47,14 @@ export async function verifyAdminPasscode(email: string, passcode: string): Prom
       return false;
     }
     
-    // In a strict commercial setup, you would check Custom Claims here.
-    // e.g. data.user.app_metadata?.role === 'super_admin'
-    // For now, successful login into the admin route indicates admin capability,
-    // assuming RLS policies limit the admin email/role in the DB.
+    // Crucial check: verify that this user is actually an admin
+    const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin');
+    
+    if (rpcError || !isAdmin) {
+      // If not an admin, we must sign them out immediately from this flow
+      await supabase.auth.signOut();
+      return false;
+    }
     
     return true;
   } catch {
@@ -69,7 +73,10 @@ export async function checkAdminSessionAsync(): Promise<boolean> {
     const { data, error } = await supabase.auth.getSession();
     if (error || !data.session) return false;
     
-    // Check custom claims if defined, otherwise presence of active session in the admin guard means access
+    // Check if the current user is actually an admin using the database RPC
+    const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin');
+    if (rpcError || !isAdmin) return false;
+
     return true;
   } catch {
     return false;

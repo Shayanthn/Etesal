@@ -52,7 +52,7 @@ export const NewsDetailPage: React.FC<NewsDetailPageProps> = ({
         'name': 'اتصال | مرجع اینترنت آزاد',
         'logo': {
           '@type': 'ImageObject',
-          'url': 'https://etesal.aeherai.ir/icon.png'
+          'url': 'https://etesal.aetherai.ir/icon.png'
         }
       },
       'mainEntityOfPage': {

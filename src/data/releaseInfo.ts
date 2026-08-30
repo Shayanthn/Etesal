@@ -24,7 +24,7 @@ export const CURRENT_APP_RELEASE: AppReleaseInfo = {
   fileSizeMB: 6.8,
   minAndroidVersion: 'Android 7.0 (Nougat) یا بالاتر',
   targetAndroidVersion: 'Android 14 (API 34)',
-  downloadUrl: 'https://etesal.aeherai.ir/downloads/etesal-v6.0.0.apk',
+  downloadUrl: 'https://etesal.aetherai.ir/downloads/etesal-v6.0.0.apk',
   sha256Checksum: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
   changelog: [
     'بهینه‌سازی کامل هسته Sing-Box Core و پروتکل‌های Reality / Hysteria 2',
