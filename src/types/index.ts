@@ -106,7 +106,7 @@ export interface User {
   email?: string;
   recoveryEmail?: string;
   avatar?: string;
-  role: 'user' | 'vip' | 'admin';
+  role: 'user' | 'vip' | 'super_admin';
   walletBalance: number; // in Tomans
   transactions?: WalletTransaction[];
   joinedDate: string;
