@@ -202,24 +202,11 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     setIsDepositing(true);
 
     setTimeout(() => {
-      const refId = `DEP-${Math.floor(100000 + Math.random() * 900000)}`;
-      const newTx = createDepositTransaction(depositAmount, refId);
-      const updatedUser: UserType = {
-        ...user,
-        walletBalance: walletBalance + depositAmount,
-        transactions: [newTx, ...transactions]
-      };
-
-      if (onUpdateUser) {
-        onUpdateUser(updatedUser);
-      }
-
       setIsDepositing(false);
-      setShowTopUpModal(false);
       onShowToast({
-        title: 'کیف پول با موفقیت شارژ شد 💳',
-        description: `مبلغ ${depositAmount.toLocaleString('fa-IR')} تومان به موجودی شما افزوده شد.`,
-        type: 'success'
+        title: 'خطای اتصال به درگاه 🛑',
+        description: 'درگاه پرداخت به دلیل قرارگیری سامانه در حالت دمو غیرفعال است.',
+        type: 'error'
       });
     }, 900);
   };
@@ -399,6 +386,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="space-y-6">
           
           {/* Main Metric Cards Grid */}
+          {user.subscription?.status === 'active' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* Traffic Quota Card */}
@@ -478,6 +466,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </div>
 
           </div>
+          )}
 
           {/* Quick CTA to Wallet & Dedicated Configs */}
           {user.role !== 'vip' && (
@@ -728,64 +717,64 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="space-y-6">
           
           {/* Subscription Link Box */}
-          <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 border border-purple-500/40 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="space-y-1">
-                <h3 className="text-base font-black text-white flex items-center gap-2">
-                  <Key className="w-5 h-5 text-purple-400" />
-                  <span>لینک سابسکریپشن خودکار (Auto-Update Subscription)</span>
-                </h3>
-                <p className="text-xs text-slate-400">
-                  با وارد کردن این لینک در نرم‌افزارهای کلاینت، آخرین نودهای بدون فیلتر به صورت خودکار دریافت و همگام می‌شوند.
-                </p>
+          {user.subscription?.status === 'active' ? (
+            <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 border border-purple-500/40 shadow-2xl space-y-5">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="space-y-1">
+                  <h3 className="text-base font-black text-white flex items-center gap-2">
+                    <Key className="w-5 h-5 text-purple-400" />
+                    <span>لینک سابسکریپشن خودکار (Auto-Update Subscription)</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    با وارد کردن این لینک در نرم‌افزارهای کلاینت، آخرین نودهای بدون فیلتر به صورت خودکار دریافت و همگام می‌شوند.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowQrModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-cyan-400" />
+                    <span>اسکن QR Code</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* URL Input & Copy Button */}
+              <div className="flex items-center gap-2 p-2 rounded-2xl bg-slate-950 border border-slate-800">
+                <input
+                  type="text"
+                  readOnly
+                  value={user.subscription.subscriptionUrl}
+                  className="flex-1 bg-transparent border-none text-xs text-slate-300 font-mono px-2 focus:outline-none select-all"
+                  dir="ltr"
+                />
                 <button
-                  onClick={() => setShowQrModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer"
+                  onClick={handleCopySub}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isCopiedSub
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-950/50'
+                  }`}
                 >
-                  <QrCode className="w-4 h-4 text-cyan-400" />
-                  <span>اسکن QR Code</span>
+                  {isCopiedSub ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{isCopiedSub ? 'کپی شد' : 'کپی لینک ساب'}</span>
                 </button>
               </div>
-            </div>
 
-            {/* URL Input & Copy Button */}
-            <div className="flex items-center gap-2 p-2 rounded-2xl bg-slate-950 border border-slate-800">
-              <input
-                type="text"
-                readOnly
-                value={user.subscription.subscriptionUrl}
-                className="flex-1 bg-transparent border-none text-xs text-slate-300 font-mono px-2 focus:outline-none select-all"
-                dir="ltr"
-              />
-              <button
-                onClick={handleCopySub}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  isCopiedSub
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-950/50'
-                }`}
-              >
-                {isCopiedSub ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{isCopiedSub ? 'کپی شد' : 'کپی لینک ساب'}</span>
-              </button>
-            </div>
-
-            {/* Direct 1-Click Client Launchers */}
-            <div className="pt-2">
-              <div className="text-xs font-bold text-slate-400 mb-3">افزودن مستقیم به نرم‌افزارهای کلاینت:</div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { name: 'Hiddify Next', scheme: `hiddify://install-sub?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-purple-500' },
-                  { name: 'v2rayNG', scheme: `v2rayng://install-config?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-cyan-500' },
-                  { name: 'Sing-Box Core', scheme: `sing-box://import-remote-profile?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-indigo-500' },
-                  { name: 'Clash Meta / Verge', scheme: `clash://install-config?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-emerald-500' },
-                ].map((client, idx) => (
-                  <a
-                    key={idx}
-                    href={client.scheme}
+              {/* Direct 1-Click Client Launchers */}
+              <div className="pt-2">
+                <div className="text-xs font-bold text-slate-400 mb-3">افزودن مستقیم به نرم‌افزارهای کلاینت:</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { name: 'Hiddify Next', scheme: `hiddify://install-sub?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-purple-500' },
+                    { name: 'v2rayNG', scheme: `v2rayng://install-config?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-cyan-500' },
+                    { name: 'Sing-Box Core', scheme: `sing-box://import-remote-profile?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-indigo-500' },
+                    { name: 'Clash Meta / Verge', scheme: `clash://install-config?url=${encodeURIComponent(user.subscription.subscriptionUrl)}`, color: 'hover:border-emerald-500' },
+                  ].map((client, idx) => (
+                    <a
+                      key={idx}
+                      href={client.scheme}
                     onClick={() => {
                       onShowToast({
                         title: `ایمپورت در ${client.name} 📲`,
@@ -805,10 +794,25 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </div>
 
           </div>
-
+          ) : (
+            <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mx-auto text-slate-500">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-200">اشتراک فعالی ندارید</h3>
+                <p className="text-xs text-slate-400 mt-1">برای دریافت کانفیگ اختصاصی باید کیف پول خود را شارژ کرده و بسته خریداری کنید.</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('wallet')}
+                className="mt-4 px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-900/50 cursor-pointer inline-flex items-center gap-2"
+              >
+                <span>رفتن به کیف پول</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
-
       {/* TAB 4: ACTIVE DEVICES & SESSIONS */}
       {activeTab === 'devices' && (
         <div className="space-y-4">

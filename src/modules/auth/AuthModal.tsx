@@ -210,16 +210,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <>
-      {showRecoveryPrompt && tempCreatedUser && (
-        <RecoveryEmailPromptModal
-          isOpen={showRecoveryPrompt}
-          username={tempCreatedUser.username}
-          onSaveEmail={handleSaveRecoveryEmail}
-          onSkip={handleSkipRecoveryEmail}
-        />
-      )}
-
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+      {/* Moved RecoveryEmailPromptModal to the end of the fragment to ensure it stacks on top of the fixed auth modal overlay */}
+      {!showRecoveryPrompt && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
         <div className="relative w-full max-w-md my-auto rounded-3xl bg-slate-900 border border-purple-500/30 p-6 md:p-8 shadow-2xl shadow-purple-950/50 text-right overflow-hidden">
           
           {/* Glow ambient background */}
@@ -457,6 +450,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         </div>
       </div>
+      )}
+      
+      {showRecoveryPrompt && tempCreatedUser && (
+        <RecoveryEmailPromptModal
+          isOpen={showRecoveryPrompt}
+          username={tempCreatedUser.username}
+          onSaveEmail={handleSaveRecoveryEmail}
+          onSkip={handleSkipRecoveryEmail}
+        />
+      )}
     </>
   );
 };

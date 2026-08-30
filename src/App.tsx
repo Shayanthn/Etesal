@@ -84,22 +84,22 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Restore persisted session from secure storage
-    const savedUser = getSavedLocalSession();
-    if (savedUser) {
-      setCurrentUser(savedUser);
+    // 1. Initial Auth Restore
+    let initialUser = getSavedLocalSession();
+    if (initialUser) {
+      setCurrentUser(initialUser);
     }
     
-    // Sync with Supabase Auth state (especially for OAuth like Google)
+    // 2. Sync with Supabase Auth state (especially for OAuth like Google)
     const unsubscribeSync = syncSessionWithSupabase((user) => {
       setCurrentUser(user);
     });
 
-    // Check initial pathname for standard SEO routing
+    // 3. Check initial pathname for standard SEO routing
     const path = window.location.pathname;
     if (path !== '/' && path !== '') {
       if (path === '/dashboard') {
-        if (currentUser) {
+        if (initialUser) {
           setCurrentView('dashboard');
         } else {
           setCurrentView('home');
@@ -133,10 +133,11 @@ export const App: React.FC = () => {
 
     const handlePopState = () => {
       const currentPath = window.location.pathname;
+      const u = getSavedLocalSession();
       if (currentPath === '/' || currentPath === '') {
         setCurrentView('home');
       } else if (currentPath === '/dashboard') {
-        setCurrentView(currentUser ? 'dashboard' : 'home');
+        setCurrentView(u ? 'dashboard' : 'home');
       } else if (currentPath === '/download' || currentPath === '/downloads') {
         setCurrentView('download');
       } else if (currentPath === '/support' || currentPath === '/ticket' || currentPath === '/tickets') {
@@ -179,7 +180,7 @@ export const App: React.FC = () => {
       window.removeEventListener('popstate', handlePopState);
       unsubscribeSync();
     };
-  }, [currentUser]);
+  }, []); // Run ONCE on mount
 
   const handleRefreshPing = async () => {
     setIsTestingPing(true);
@@ -215,6 +216,7 @@ export const App: React.FC = () => {
   const handleAuthSuccess = (user: User) => {
     setCurrentUser(user);
     saveLocalSession(user);
+    window.history.pushState({}, '', '/dashboard');
     setCurrentView('dashboard');
   };
 

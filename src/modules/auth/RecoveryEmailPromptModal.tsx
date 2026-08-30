@@ -41,7 +41,7 @@ export const RecoveryEmailPromptModal: React.FC<RecoveryEmailPromptModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in dir-rtl">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in dir-rtl">
       <div className="relative w-full max-w-md bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 md:p-8 shadow-2xl shadow-emerald-950/40 overflow-hidden">
         {/* Glow Accent */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
