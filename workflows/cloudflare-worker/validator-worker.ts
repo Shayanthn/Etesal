@@ -48,6 +48,24 @@ function isPrivateIP(ip: string): boolean {
   if (ipv4Match) {
     if (isPrivateIP(ipv4Match[0])) return true;
   }
+  
+  // Catch hex-encoded IPv4-mapped addresses like ::ffff:7f00:1
+  if (lower.startsWith('::ffff:')) {
+    const hexPart = lower.substring(7);
+    if (!hexPart.includes(':') && /^[0-9a-f]+$/i.test(hexPart)) {
+      // It's a hex representation of an IPv4 address
+      // e.g. 7f000001 or 7f00:1
+      return true; // Simplest and safest is to block all such obscure encodings or properly parse them.
+    }
+    if (hexPart.includes(':')) {
+       return true; // fail closed for any weird ffff: mapping
+    }
+  }
+
+  // Fail closed for unrecognized or complex hex mappings that might hide loopback
+  // A complete IPv6 parser is required for perfect validation, but we can block known bypasses.
+  if (lower.includes('7f00')) return true; // loopback hex
+  if (lower.includes('c612')) return true; // 198.18 hex
 
   if (lower.startsWith('64:ff9b:')) return true;                 // NAT64 well-known prefix
   return false;

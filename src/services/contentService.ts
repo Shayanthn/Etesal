@@ -1,6 +1,4 @@
 import { getSupabase } from './supabaseClient';
-import { SAMPLE_NEWS_ARTICLES } from '../data/newsData';
-import { KNOWLEDGE_ARTICLES } from '../data/articles.data';
 
 export async function fetchArticles() {
   const supabase = getSupabase();
@@ -19,13 +17,7 @@ export async function fetchArticles() {
       // Fallback
     }
   }
-  return KNOWLEDGE_ARTICLES.map(a => ({
-    ...a,
-    slug: a.id,
-    content: (a as any).fullContent ? (a as any).fullContent.map((p: string) => `<p>${p}</p>`).join('') : '',
-    meta_title: a.title,
-    meta_description: a.description
-  }));
+  return [];
 }
 
 export async function fetchNews() {
@@ -45,7 +37,7 @@ export async function fetchNews() {
       // Fallback
     }
   }
-  return SAMPLE_NEWS_ARTICLES;
+  return [];
 }
 
 export async function saveArticle(article: any) {
@@ -120,5 +112,5 @@ export async function fetchArticleBySlug(slug: string) {
       // Fallback
     }
   }
-  return KNOWLEDGE_ARTICLES.find(a => a.id === slug) || null;
+  return null;
 }

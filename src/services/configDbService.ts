@@ -1,6 +1,5 @@
 import { getSupabase } from './supabaseClient';
 import { V2RayConfig, MtprotoProxy } from '../types';
-import { SAMPLE_CONFIGS, SAMPLE_PROXIES } from '../data';
 
 const LOCAL_CONFIGS_KEY = 'etesal_configs_vault';
 const LOCAL_PROXIES_KEY = 'etesal_proxies_vault';
@@ -10,7 +9,6 @@ const LOCAL_PROXIES_KEY = 'etesal_proxies_vault';
  */
 export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
   const supabase = getSupabase();
-
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -49,7 +47,7 @@ export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
     // Ignore
   }
 
-  return SAMPLE_CONFIGS;
+  return [];
 }
 
 /**
@@ -57,7 +55,6 @@ export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
  */
 export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
   const supabase = getSupabase();
-
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -92,7 +89,7 @@ export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
     // Ignore
   }
 
-  return SAMPLE_PROXIES;
+  return [];
 }
 
 /**
@@ -100,7 +97,6 @@ export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
  */
 export async function saveConfigsBatch(configs: V2RayConfig[]): Promise<boolean> {
   const supabase = getSupabase();
-
   if (supabase) {
     try {
       const dbPayload = configs.map(c => ({

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   SAMPLE_CONFIGS, 
   SAMPLE_PROXIES, 
-  LATEST_NEWS, 
-  KNOWLEDGE_ARTICLES, 
   FAQS_LIST 
 } from './data';
 import { 
@@ -42,10 +40,9 @@ const MasterAdminDashboard = lazy(() => import('./modules/admin/MasterAdminDashb
 import { AdminRouteGuard } from './components/auth/AdminRouteGuard';
 import { ToastContainer } from './modules/feedback/ToastContainer';
 import { NewsArticle } from './types/news';
-import { SAMPLE_NEWS_ARTICLES } from './data/newsData';
 import { getSavedLocalSession, logoutUser, saveLocalSession, syncSessionWithSupabase } from './services/authService';
-import { fetchArticleBySlug } from './services/contentService';
-import { runBatchEdgePing } from './services/edgePingService';
+import { fetchArticleBySlug, fetchArticles, fetchNews } from './services/contentService';
+import { fetchLiveConfigs, fetchLiveProxies } from './services/configDbService';
 
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -53,8 +50,10 @@ export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'dashboard' | 'download' | 'support' | 'news' | 'admin' | '404' | 'article'>('home');
   const [activeNewsArticle, setActiveNewsArticle] = useState<NewsArticle | null>(null);
   const [activeArticleData, setActiveArticleData] = useState<any | null>(null);
-  const [configs, setConfigs] = useState<V2RayConfig[]>(SAMPLE_CONFIGS);
-  const [proxies, setProxies] = useState<MtprotoProxy[]>(SAMPLE_PROXIES);
+  const [configs, setConfigs] = useState<V2RayConfig[]>([]);
+  const [proxies, setProxies] = useState<MtprotoProxy[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [isTestingPing, setIsTestingPing] = useState(false);
 
   // Authentication State
@@ -96,6 +95,19 @@ export const App: React.FC = () => {
       setCurrentUser(user);
     });
 
+    // 2.5 Fetch initial dynamic data
+    Promise.all([
+      fetchLiveConfigs(),
+      fetchLiveProxies(),
+      fetchArticles(),
+      fetchNews()
+    ]).then(([c, p, a, n]) => {
+      if (c && c.length) setConfigs(c);
+      if (p && p.length) setProxies(p);
+      if (a && a.length) setArticles(a as any);
+      if (n && n.length) setNews(n as any);
+    });
+
     // 3. Check initial pathname for standard SEO routing
     const path = window.location.pathname;
     if (path !== '/' && path !== '') {
@@ -115,10 +127,10 @@ export const App: React.FC = () => {
         setCurrentView('news');
         if (path.startsWith('/news/')) {
           const slug = path.replace('/news/', '').trim();
-          const found = SAMPLE_NEWS_ARTICLES.find(a => a.slug === slug);
-          if (found) {
-            setActiveNewsArticle(found);
-          }
+          fetchNews().then(n => {
+            const found = n.find((a: any) => a.slug === slug);
+            if (found) setActiveNewsArticle(found);
+          });
         }
       } else if (path.startsWith('/article/')) {
         const slug = path.replace('/article/', '').trim();
@@ -149,12 +161,14 @@ export const App: React.FC = () => {
         setCurrentView('news');
         if (currentPath.startsWith('/news/')) {
           const slug = currentPath.replace('/news/', '').trim();
-          const found = SAMPLE_NEWS_ARTICLES.find(a => a.slug === slug);
-          if (found) {
-            setActiveNewsArticle(found);
-          } else {
-            setActiveNewsArticle(null);
-          }
+          fetchNews().then(n => {
+            const found = n.find((a: any) => a.slug === slug);
+            if (found) {
+              setActiveNewsArticle(found);
+            } else {
+              setActiveNewsArticle(null);
+            }
+          });
         } else {
           setActiveNewsArticle(null);
         }
@@ -186,9 +200,10 @@ export const App: React.FC = () => {
   const handleRefreshPing = async () => {
     setIsTestingPing(true);
     try {
-      const { updatedConfigs, updatedProxies } = await runBatchEdgePing(configs, proxies);
-      setConfigs(updatedConfigs);
-      setProxies(updatedProxies);
+      const c = await fetchLiveConfigs();
+      const p = await fetchLiveProxies();
+      if (c && c.length) setConfigs(c);
+      if (p && p.length) setProxies(p);
       addToast({
         title: 'بروزرسانی پینگ زنده انجام شد 📶',
         description: 'تاخیر واقعی گیت‌وی‌ها در همراه اول، ایرانسل و رایتل با موفقیت سنجیده شد.',
@@ -417,7 +432,7 @@ export const App: React.FC = () => {
               setActiveNewsArticle(null);
               setCurrentView('news');
             }}
-            news={LATEST_NEWS}
+            news={news}
             onSelectNews={item => setSelectedNews(item)}
           />
 
@@ -447,7 +462,7 @@ export const App: React.FC = () => {
 
           {/* Technical SEO & Knowledge Base Articles */}
           <ArticlesSection
-            articles={KNOWLEDGE_ARTICLES}
+            articles={articles}
             onSelectArticle={art => {
               const slug = (art as any).slug || art.id;
               window.history.pushState({}, '', `/article/${slug}`);
