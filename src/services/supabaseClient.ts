@@ -43,7 +43,7 @@ export const getSupabase = (): SupabaseClient | null => {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storage: window.localStorage,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
         storageKey: 'etesal_supabase_auth_token'
       }
     });
