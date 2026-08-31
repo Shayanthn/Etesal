@@ -123,12 +123,14 @@ export function getSavedLocalSession(): User | null {
   }
 }
 
-export function syncSessionWithSupabase(onUserUpdate: (user: User) => void): () => void {
+export function syncSessionWithSupabase(onUserUpdate: (user: User) => void, onPasswordRecovery?: () => void): () => void {
   const supabase = getSupabase();
   if (!supabase) return () => {};
 
   const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session?.user) {
+    if (event === 'PASSWORD_RECOVERY') {
+      if (onPasswordRecovery) onPasswordRecovery();
+    } else if (event === 'SIGNED_IN' && session?.user) {
       // Check if we already have this user in local storage to prevent unnecessary overwrites
       const currentLocal = getSavedLocalSession();
       if (currentLocal && currentLocal.id === session.user.id) {

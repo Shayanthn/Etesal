@@ -34,6 +34,7 @@ import { NewsHub } from './modules/news/NewsHub';
 import { NewsDetailPage } from './modules/news/NewsDetailPage';
 import { ArticleDetailPage } from './modules/articles/ArticleDetailPage';
 import { AuthModal } from './modules/auth/AuthModal';
+import { UpdatePasswordModal } from './modules/auth/UpdatePasswordModal';
 import { UserDashboard } from './modules/dashboard/UserDashboard';
 import { Suspense, lazy } from 'react';
 const MasterAdminDashboard = lazy(() => import('./modules/admin/MasterAdminDashboard').then(m => ({ default: m.MasterAdminDashboard })));
@@ -59,6 +60,7 @@ export const App: React.FC = () => {
   // Authentication State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isUpdatePasswordModalOpen, setIsUpdatePasswordModalOpen] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
 
   // Modals state
@@ -91,9 +93,10 @@ export const App: React.FC = () => {
     }
     
     // 2. Sync with Supabase Auth state (especially for OAuth like Google)
-    const unsubscribeSync = syncSessionWithSupabase((user) => {
-      setCurrentUser(user);
-    });
+    const unsubscribeSync = syncSessionWithSupabase(
+      (user) => setCurrentUser(user),
+      () => setIsUpdatePasswordModalOpen(true)
+    );
 
     // 2.5 Fetch initial dynamic data
     Promise.all([
@@ -416,6 +419,14 @@ export const App: React.FC = () => {
             onShowToast={addToast}
           />
         </main>
+      ) : currentView === 'article' && !activeArticleData ? (
+        <main className="container mx-auto px-4 py-20 max-w-6xl text-center space-y-4">
+          <div className="text-purple-400 font-bold">در حال بارگذاری مقاله یا مقاله یافت نشد...</div>
+          <button onClick={() => {
+            window.history.pushState({}, '', '/');
+            setCurrentView('home');
+          }} className="text-slate-400 hover:text-white underline">بازگشت به صفحه اصلی</button>
+        </main>
       ) : (
         /* Main Home Content Layout */
         <main className="container mx-auto px-4 max-w-6xl space-y-4">
@@ -521,6 +532,12 @@ export const App: React.FC = () => {
         initialMode={authInitialMode}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccessAuth={handleAuthSuccess}
+        onShowToast={addToast}
+      />
+      
+      <UpdatePasswordModal
+        isOpen={isUpdatePasswordModalOpen}
+        onClose={() => setIsUpdatePasswordModalOpen(false)}
         onShowToast={addToast}
       />
 

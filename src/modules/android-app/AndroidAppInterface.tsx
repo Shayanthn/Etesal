@@ -345,9 +345,9 @@ export const AndroidAppInterface: React.FC<AndroidAppInterfaceProps> = ({
             <div className="space-y-1.5 py-1">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[11px] font-bold text-slate-300">نودهای اختصاصی و عمومی</span>
-                <span className="text-[9px] text-slate-500 font-mono">{configs.length} نود آنلاین</span>
+                <span className="text-[9px] text-slate-500 font-mono">{Math.min(configs.length, 10)} نود آنلاین</span>
               </div>
-              {configs.map(cfg => (
+              {configs.slice(0, 10).map(cfg => (
                 <div
                   key={cfg.id}
                   onClick={() => {

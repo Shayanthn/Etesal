@@ -35,7 +35,7 @@ export const LiveConfigBox: React.FC<LiveConfigBoxProps> = ({
   const filteredConfigs = configs.filter(cfg => {
     if (selectedOperator === 'all') return true;
     return cfg.operator === selectedOperator || cfg.operator === 'all';
-  });
+  }).slice(0, 6);
 
   const handleCopy = (config: V2RayConfig) => {
     navigator.clipboard.writeText(config.configString);

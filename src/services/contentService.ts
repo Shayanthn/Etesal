@@ -11,7 +11,13 @@ export async function fetchArticles() {
         .order('published_at', { ascending: false });
         
       if (!error && data && data.length > 0) {
-        return data;
+        return data.map((item: any) => ({
+          ...item,
+          description: item.excerpt,
+          readTime: (item.read_time_minutes || 5) + ' دقیقه',
+          author: { name: item.author || 'تیم اتصال', role: '', avatar: '' },
+          iconName: item.category === 'راهنمای انتخاب' ? 'Network' : item.category === 'امنیت پیام‌رسان' ? 'ShieldCheck' : 'Cpu'
+        }));
       }
     } catch {
       // Fallback
@@ -31,7 +37,12 @@ export async function fetchNews() {
         .order('published_at', { ascending: false });
         
       if (!error && data && data.length > 0) {
-        return data;
+        return data.map((item: any) => ({
+            ...item,
+            imageUrl: item.image_url,
+            readTimeMinutes: 5, // fallback
+            categoryLabelFa: 'خبر'
+        }));
       }
     } catch {
       // Fallback
@@ -106,7 +117,12 @@ export async function fetchArticleBySlug(slug: string) {
         .single();
         
       if (!error && data) {
-        return data;
+        return {
+          ...data,
+          description: data.excerpt,
+          readTime: (data.read_time_minutes || 5) + ' دقیقه',
+          author: { name: data.author || 'تیم اتصال', role: '', avatar: '' }
+        };
       }
     } catch {
       // Fallback

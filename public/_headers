@@ -1,6 +1,6 @@
 /*
   X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+  Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
   Referrer-Policy: strict-origin-when-cross-origin

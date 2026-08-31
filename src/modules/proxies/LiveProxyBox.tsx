@@ -68,7 +68,7 @@ export const LiveProxyBox: React.FC<LiveProxyBoxProps> = ({
 
         {/* Proxies Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-6">
-          {proxies.map(prx => (
+          {proxies.slice(0, 6).map(prx => (
             <div
               key={prx.id}
               className="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 hover:border-cyan-500/50 hover:bg-slate-800/70 transition-all flex flex-col justify-between gap-4 group"
