@@ -210,19 +210,35 @@ export async function replyToSupportTicket(
   replyText: string,
   newStatus: AdminSupportTicket['status'] = 'resolved'
 ): Promise<TicketOperationResult> {
+  const sanitizedTicketId = (ticketId || '').trim();
+  if (!sanitizedTicketId) {
+    throw new Error('شناسه تیکت نامعتبر است.');
+  }
+
   const now = new Date().toISOString();
   const supabase = getSupabase();
 
   if (supabase) {
-    const { error } = await supabase
+    // Determine whether ticketId is UUID format or human-readable ticket_code format
+    // to build safe typed parameter queries without dynamic .or() string interpolation injection risks
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sanitizedTicketId);
+    
+    let query = supabase
       .from('support_tickets')
       .update({
         reply_message: replyText.trim(),
         replied_at: now,
         status: newStatus,
         updated_at: now
-      })
-      .or(`id.eq.${ticketId},ticket_code.eq.${ticketId}`);
+      });
+
+    if (isUUID) {
+      query = query.eq('id', sanitizedTicketId);
+    } else {
+      query = query.eq('ticket_code', sanitizedTicketId);
+    }
+
+    const { error } = await query;
       
     if (error) {
       console.error('Supabase replyToSupportTicket error:', error);
@@ -234,7 +250,7 @@ export async function replyToSupportTicket(
   // Update local vault
   const vault = getLocalTicketsVault();
   const updatedVault = vault.map(t => {
-    if (t.id === ticketId || (t as any).ticketCode === ticketId) {
+    if (t.id === sanitizedTicketId || (t as any).ticketCode === sanitizedTicketId) {
       return {
         ...t,
         replyMessage: replyText.trim(),
@@ -247,6 +263,6 @@ export async function replyToSupportTicket(
   });
 
   saveLocalTicketsVault(updatedVault);
-  const target = updatedVault.find(t => t.id === ticketId);
+  const target = updatedVault.find(t => t.id === sanitizedTicketId);
   return { success: true, ticket: target };
 }

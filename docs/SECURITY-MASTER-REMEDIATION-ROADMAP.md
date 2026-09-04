@@ -29,9 +29,8 @@
 
 ## 🟠 فاز ۲: اولویت بالا (امنیت کلاینت، بیلد و یکپارچگی)
 
-### [ ] TICKET-4: جلوگیری از نشت سورس کد و بهینه‌سازی باندل (Vite Build Security)
-- **فایل هدف:** `vite.config.ts`
-- **اقدام مورد نیاز:** تنظیم `build.sourcemap: false`، `esbuild.drop: ['console', 'debugger']` و اضافه کردن `manualChunks`.
+### [x] TICKET-4: جلوگیری از نشت سورس کد و بهینه‌سازی باندل (Vite Build Security) [VERIFIED]
+- **وضعیت:** تنظیم `sourcemap: false`، حذف دستورات `console` و `debugger` توسط esbuild در پروداکشن، تقسیم هوشمند کدهای حجیم شخص ثالث به `vendor-react`، `vendor-supabase` و `vendor-ui` با موفقیت اعمال و توسط تست مرورگر تایید شد.
 
 ### [ ] TICKET-5: سخت‌سازی CSP (جلوگیری از XSS با وجود DOMPurify)
 - **فایل هدف:** `public/_headers` و `index.html`
