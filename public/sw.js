@@ -1,5 +1,5 @@
 // Service Worker for Etesal App (PWA)
-const CACHE_NAME = 'etesal-app-v2';
+const CACHE_NAME = 'etesal-app-v3';
 
 const ASSETS_TO_CACHE = [
   '/',
@@ -53,8 +53,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for all other static assets
+  // Only handle same-origin GET requests; bypass foreign/cross-origin requests to prevent Service Worker CSP proxy violations
   if (event.request.method === 'GET') {
+    const url = new URL(event.request.url);
+    if (url.origin !== self.location.origin) {
+      return; // Let browser fetch external fonts, images, media natively
+    }
+
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
