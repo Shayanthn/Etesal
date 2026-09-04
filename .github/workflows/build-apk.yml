@@ -61,6 +61,18 @@ jobs:
           keyPassword: ${{ secrets.KEY_PASSWORD }}
         continue-on-error: true
 
+      - name: Sign with Built-in Fallback Key (Guarantees Installable APK)
+        if: steps.sign_app.outcome != 'success' || steps.sign_app.conclusion != 'success'
+        run: |
+          echo "Applying fallback signature so APK installs without 'App not installed' error..."
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+          UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -f "$UNSIGNED_APK" ]; then
+            keytool -genkey -v -keystore ./temp-release.keystore -alias etesal -keyalg RSA -keysize 2048 -validity 10000 -storepass etesal123 -keypass etesal123 -dname "CN=Etesal, OU=Mobile, O=Etesal Hub, L=Tehran, S=Tehran, C=IR"
+            $BUILD_TOOLS_DIR/apksigner sign --ks ./temp-release.keystore --ks-pass pass:etesal123 --key-pass pass:etesal123 --out android/app/build/outputs/apk/release/etesal-signed.apk "$UNSIGNED_APK"
+            echo "Successfully signed release APK with fallback key."
+          fi
+
       - name: Generate SHA-256 Checksum
         id: checksum
         run: |

@@ -45,10 +45,11 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="p-6">
+    <div className="fixed inset-0 z-[100] overflow-y-auto">
+      <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 relative z-10">
+        <div className="relative w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-4 sm:my-8">
+          <div className="p-5 sm:p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-black text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-400" />
@@ -93,5 +94,6 @@ export const UpdatePasswordModal: React.FC<UpdatePasswordModalProps> = ({
         </div>
       </div>
     </div>
+  </div>
   );
 };

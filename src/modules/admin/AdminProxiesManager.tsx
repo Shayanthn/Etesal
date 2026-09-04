@@ -255,8 +255,9 @@ export const AdminProxiesManager: React.FC<AdminProxiesManagerProps> = ({
 
       {/* Add / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-xl rounded-3xl bg-slate-900 border border-cyan-500/40 p-6 shadow-2xl space-y-4 text-right max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md">
+          <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6">
+            <div className="relative w-full max-w-xl rounded-3xl bg-slate-900 border border-cyan-500/40 p-5 sm:p-6 shadow-2xl space-y-4 text-right my-4 sm:my-8">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Radio className="w-5 h-5 text-cyan-400" />
@@ -276,7 +277,7 @@ export const AdminProxiesManager: React.FC<AdminProxiesManagerProps> = ({
                 <label className="font-bold text-slate-300">نام نمایشی پروکسی:</label>
                 <input
                   type="text"
-                  placeholder="مثال: 🇩🇪 پروکسی ضد فیلتر آلمان"
+                  placeholder="مثال: 🇩🇪 پروکسی اختصاصی آلمان"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
@@ -377,6 +378,7 @@ export const AdminProxiesManager: React.FC<AdminProxiesManagerProps> = ({
             </form>
           </div>
         </div>
+      </div>
       )}
 
     </div>

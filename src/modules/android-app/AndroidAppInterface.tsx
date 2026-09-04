@@ -36,8 +36,14 @@ export const AndroidAppInterface: React.FC<AndroidAppInterfaceProps> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedConfigId, setSelectedConfigId] = useState<string>(configs[0]?.id || 'cfg-1');
   const [activeTab, setActiveTab] = useState<'home' | 'wallet' | 'servers' | 'split'>('home');
+  const [showWalletUnavailableModal, setShowWalletUnavailableModal] = useState(false);
   const [pingSpeed, setPingSpeed] = useState(42);
   const [duration, setDuration] = useState(0);
+
+  const handleOpenWallet = () => {
+    setActiveTab('wallet');
+    setShowWalletUnavailableModal(true);
+  };
 
   // App-local wallet state for seamless mobile experience (no complex auth needed)
   const [appWalletBalance, setAppWalletBalance] = useState(150000);
@@ -117,6 +123,50 @@ export const AndroidAppInterface: React.FC<AndroidAppInterfaceProps> = ({
       {/* Screen Body */}
       <div className="relative w-full h-[620px] rounded-[34px] bg-[#0b0f19] overflow-hidden flex flex-col pt-8 pb-3 px-3.5 border border-slate-800 dir-rtl text-right">
         
+        {/* Wallet Unavailable In-App Popup Modal */}
+        {showWalletUnavailableModal && (
+          <div 
+            className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in text-center select-none"
+            onClick={() => setShowWalletUnavailableModal(false)}
+          >
+            <div 
+              className="w-full max-w-[280px] rounded-3xl bg-slate-900 border-2 border-purple-500/40 p-5 shadow-2xl space-y-4 text-center transform transition-all"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600/30 to-amber-500/20 border border-amber-500/40 mx-auto flex items-center justify-center text-amber-400 shadow-inner">
+                <Sparkles className="w-7 h-7 text-amber-400 animate-pulse" />
+              </div>
+
+              <div className="space-y-1.5">
+                <h4 className="text-sm font-black text-white">قابلیت در دسترس نیست</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  فعلاً این قابلیت در دسترس نیست، از سرورها و کانفیگ‌های رایگان لذت ببر! 🎉
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => {
+                    setShowWalletUnavailableModal(false);
+                    setActiveTab('servers');
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black shadow-lg shadow-purple-950/50 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Server className="w-3.5 h-3.5" />
+                  <span>سرورها و کانفیگ‌های رایگان</span>
+                </button>
+
+                <button
+                  onClick={() => setShowWalletUnavailableModal(false)}
+                  className="w-full py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] font-bold cursor-pointer transition-all"
+                >
+                  متوجه شدم
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Status Bar */}
         <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono px-2 mb-2.5" dir="ltr">
           <span>{new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -252,7 +302,7 @@ export const AndroidAppInterface: React.FC<AndroidAppInterfaceProps> = ({
 
               {/* Quick Subscription & Wallet Pill */}
               <div 
-                onClick={() => setActiveTab('wallet')}
+                onClick={handleOpenWallet}
                 className="w-full mt-2 flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/40 to-slate-900 border border-emerald-500/30 text-[10px] cursor-pointer hover:border-emerald-500/60 transition-all"
               >
                 <div className="flex items-center gap-1.5 text-emerald-300 font-bold">
@@ -266,53 +316,47 @@ export const AndroidAppInterface: React.FC<AndroidAppInterfaceProps> = ({
             </div>
           )}
 
-          {/* TAB: WALLET & VIP SUBSCRIPTION RENEWAL (Zero login barrier) */}
+          {/* TAB: WALLET & VIP SUBSCRIPTION RENEWAL */}
           {activeTab === 'wallet' && (
             <div className="space-y-3 py-1 animate-fade-in text-right">
               
-              {/* Notification Toast inside Phone */}
-              {purchaseSuccessMsg && (
-                <div className="p-2 rounded-xl bg-emerald-500 text-slate-950 text-[10px] font-black text-center animate-bounce">
-                  {purchaseSuccessMsg}
-                </div>
-              )}
-
-              {/* Mobile Wallet Balance Header */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-950 border border-emerald-500/40 shadow-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                    <Wallet className="w-3.5 h-3.5" />
-                    <span>کیف پول اپلیکیشن (بدون نیاز به لاگین)</span>
-                  </span>
-                  <button
-                    onClick={() => setAppWalletBalance(b => b + 100000)}
-                    className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[9px] flex items-center gap-1 cursor-pointer"
-                  >
-                    <PlusCircle className="w-2.5 h-2.5" />
-                    <span>شارژ ۱۰۰ ت</span>
-                  </button>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <div className="text-xl font-black text-white font-mono">
-                    {appWalletBalance.toLocaleString('fa-IR')} <span className="text-[10px] font-normal text-slate-400">تومان</span>
+              {/* Feature Unavailable Notice Banner */}
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed flex items-start gap-2.5">
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-black text-white text-xs">این قابلیت در دسترس نیست</div>
+                  <div className="text-[10px] text-slate-300 leading-normal">
+                    در حال حاضر تمامی نودهای ارتباطی اتصال ۱۰۰٪ رایگان هستند. از سرورهای آزاد لذت ببرید!
                   </div>
-                  <span className="text-[9px] text-emerald-300 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    شناسه دستگاه شما متصل است
-                  </span>
                 </div>
               </div>
 
-              {/* In-App Renewal Catalog */}
-              <div className="space-y-2">
-                <div className="text-[11px] font-black text-white flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>پلن‌های تمدید و خرید اشتراک VIP:</span>
+              {/* Free Servers Direct Action */}
+              <button
+                onClick={() => setActiveTab('servers')}
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Server className="w-3.5 h-3.5" />
+                <span>مشاهده سرورهای رایگان و پرسرعت 🚀</span>
+              </button>
+
+              {/* In-App Renewal Catalog (Locked/Informational) */}
+              <div className="space-y-2 pt-1">
+                <div className="text-[11px] font-black text-slate-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                    <span>پلن‌های اشتراک VIP (آینده):</span>
+                  </span>
+                  <span className="text-[9px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    موقتاً غیرفعال
+                  </span>
                 </div>
 
                 {DEDICATED_CONFIG_PRODUCTS.map((prod) => (
                   <div
                     key={prod.id}
-                    className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-2"
+                    onClick={() => setShowWalletUnavailableModal(true)}
+                    className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/40 transition-all space-y-2 cursor-pointer opacity-80 hover:opacity-100"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
@@ -322,18 +366,15 @@ export const AndroidAppInterface: React.FC<AndroidAppInterfaceProps> = ({
                           <div className="text-[9px] text-slate-400">{prod.trafficGB} گیگ • {prod.durationDays} روز • {prod.protocol}</div>
                         </div>
                       </div>
-                      <div className="text-xs font-black text-emerald-400 font-mono">
-                        {prod.priceTomans.toLocaleString('fa-IR')} <span className="text-[8px]">تومان</span>
+                      <div className="text-xs font-black text-slate-400 font-mono">
+                        رایگان فعلی
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleBuyInApp(prod.priceTomans, prod.title, prod.durationDays, prod.trafficGB)}
-                      className="w-full py-1.5 px-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-[10px] shadow-sm transition-all flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <CreditCard className="w-3 h-3" />
-                      <span>تمدید ۱ کلیک با کیف پول</span>
-                    </button>
+                    <div className="w-full py-1.5 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold text-[10px] shadow-sm transition-all flex items-center justify-center gap-1">
+                      <CreditCard className="w-3 h-3 text-purple-400" />
+                      <span>این قابلیت در دسترس نیست (رایگان)</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -408,7 +449,7 @@ export const AndroidAppInterface: React.FC<AndroidAppInterfaceProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('wallet')}
+            onClick={handleOpenWallet}
             className={`flex flex-col items-center py-1 rounded-lg transition-colors cursor-pointer ${
               activeTab === 'wallet' ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-500 hover:text-slate-300'
             }`}

@@ -192,7 +192,7 @@ export const App: React.FC = () => {
     // Initial smooth entrance
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 600);
+    }, 1500);
 
     return () => {
       clearTimeout(timer);
@@ -200,6 +200,35 @@ export const App: React.FC = () => {
       unsubscribeSync();
     };
   }, []); // Run ONCE on mount
+
+  // SPA Technical SEO: Synchronize document title and URL on view change
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      home: 'اتصال | Etesal Hub - پورتال هوشمند ارتباطات ابری و کانفیگ‌های تست‌شده شبکه',
+      download: 'دانلود اپلیکیشن اتصال | Etesal Hub - نسخه اختصاصی اندروید v6.0.0',
+      support: 'مرکز پشتیبانی، راهنمای فنی و تیکت آنلاین | Etesal Hub',
+      news: 'اخبار و پایش وضعیت لحظه‌ای شبکه اینترنت | Etesal Hub',
+      dashboard: 'داشبورد کاربری و اشتراک اختصاصی | Etesal Hub',
+      admin: 'پنل مدیریت ارشد و مرکز کنترل فنی | Etesal Hub',
+      '404': 'صفحه یافت نشد (404) | Etesal Hub'
+    };
+
+    if (currentView !== 'article') {
+      const pageTitle = titles[currentView] || 'اتصال | Etesal Hub';
+      document.title = pageTitle;
+      
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        if (currentView === 'download') {
+          metaDesc.setAttribute('content', 'دانلود آخرین نسخه اپلیکیشن اندروید اتصال (Etesal Hub) با قابلیت تست خودکار پینگ، سوییچ سرور و اتصال هوشمند.');
+        } else if (currentView === 'support') {
+          metaDesc.setAttribute('content', 'مرکز پشتیبانی فنی و سوالات متداول اتصال. پاسخگویی و رفع اشکال اتصال اینترنت، پروتکل‌های امن و بررسی آنلاین وضعیت تیکت.');
+        } else if (currentView === 'news') {
+          metaDesc.setAttribute('content', 'آخرین اخبار، گزارش‌های اختلالات اینترنت کشور و تحلیل وضعیت شبکه همراه اول و ایرانسل در پایگاه خبری اتصال.');
+        }
+      }
+    }
+  }, [currentView]);
 
   const handleRefreshPing = async () => {
     setIsTestingPing(true);

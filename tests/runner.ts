@@ -7,6 +7,7 @@ import { runAdminSecurityTests } from './unit/adminSecurity.test';
 import { runConfigEngineTests } from './unit/configProxyEngine.test';
 import { runTelegramPublisherTests } from './unit/telegramPublisher.test';
 import { runWorkerSSRFTests } from './unit/workerSSRF.test';
+import { runRateLimiterTests } from './unit/rateLimiter.test';
 
 async function main() {
   console.log('====================================================');
@@ -63,6 +64,18 @@ async function main() {
     totalFailed++;
     allErrors.push(`SSRF Validator Worker Suite crashed: ${err.message}`);
     console.error('❌ SSRF Validator Worker Suite crashed:', err);
+  }
+
+  // Suite 5: Cloudflare Worker Rate Limiter Suite
+  try {
+    const res = runRateLimiterTests();
+    totalPassed += res.passed;
+    totalFailed += res.failed;
+    allErrors.push(...res.errors);
+  } catch (err: any) {
+    totalFailed++;
+    allErrors.push(`Rate Limiter Suite crashed: ${err.message}`);
+    console.error('❌ Rate Limiter Suite crashed:', err);
   }
 
   console.log('\n====================================================');

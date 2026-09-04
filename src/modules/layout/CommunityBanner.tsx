@@ -22,15 +22,15 @@ export const CommunityBanner: React.FC = () => {
           <div className="space-y-2 max-w-xl text-right">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold">
               <Users className="w-3.5 h-3.5" />
-              <span>جامعه ۲۸,۰۰۰ نفری @vpnbuying</span>
+              <span>جامعه ۳,۰۸۶ نفری @vpnbuying</span>
             </div>
 
             <h3 className="text-xl md:text-2xl font-black text-white leading-snug">
-              عضویت در کانال تلگرام برای دریافت لحظه‌ای نودهای VIP
+              عضویت در کانال تلگرام برای دریافت لحظه‌ای نودهای اختصاصی
             </h3>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              کانفیگ‌های اختصاصی با پینگ زیر ۴۰ میلی‌ثانیه، پروکسی‌های بدون قطعی و آخرین هشدارهای فیلترینگ شبکه را در لحظه دریافت کنید.
+              کانفیگ‌های اختصاصی با پینگ زیر ۴۰ میلی‌ثانیه، پروکسی‌های پرسرعت و آخرین گزارش‌های پایش شبکه را در لحظه دریافت کنید.
             </p>
           </div>
 

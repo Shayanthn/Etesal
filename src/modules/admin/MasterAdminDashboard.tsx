@@ -55,6 +55,7 @@ import { AdminProxiesManager } from './AdminProxiesManager';
 import { AdminMusicManager } from './AdminMusicManager';
 import { AdminConfigProxyIngestionModal } from './AdminConfigProxyIngestionModal';
 import { AdminArticlesManager } from './AdminArticlesManager';
+import { UnifiedSystemLogViewer } from './components/UnifiedSystemLogViewer';
 
 interface MasterAdminDashboardProps {
   onShowToast: (toast: { title: string; description: string; type: 'success' | 'info' | 'warning' | 'error' }) => void;
@@ -275,16 +276,16 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({
       {
         id: 'log-' + Date.now(),
         level: 'success',
-        module: 'telegram_bot',
-        message: `موزیک ${trackId} با موفقیت توسط وب‌هوک به کانال تلگرام ارسال شد`,
+        module: 'telemetry',
+        message: `موزیک ${trackId} با کیفیت استودیویی ۳۲۰ اعتبارسنجی و در کتابخانه ثبت شد`,
         timestamp: new Date().toLocaleTimeString('fa-IR')
       },
       ...prev
     ]);
 
     onShowToast({
-      title: 'ارسال به تلگرام انجام شد 🚀',
-      description: 'فایل صوتی به همراه کاور و متادیتا در کانال رسمی منتشر شد.',
+      title: 'پردازش موزیک انجام شد 🎧',
+      description: 'فایل صوتی، متادیتا و کاور با موفقیت در کتابخانه صوتی ذخیره شد.',
       type: 'success'
     });
   };
@@ -1049,8 +1050,9 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({
 
           {/* Ticket Reply Modal */}
           {selectedTicket && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-              <div className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-purple-500/40 p-6 shadow-2xl space-y-4 text-right max-h-[90vh] overflow-y-auto">
+            <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md">
+              <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6">
+                <div className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-purple-500/40 p-5 sm:p-6 shadow-2xl space-y-4 text-right my-4 sm:my-8">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
                     <LifeBuoy className="w-5 h-5 text-purple-400" />
@@ -1135,6 +1137,7 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({
                 </div>
               </div>
             </div>
+          </div>
           )}
 
         </div>
@@ -1144,31 +1147,12 @@ export const MasterAdminDashboard: React.FC<MasterAdminDashboardProps> = ({
       {/* TAB 8: SYSTEM LOGS */}
       {/* ========================================================= */}
       {activeTab === 'system_logs' && (
-        <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-purple-400" />
-              <span>لاگ‌های زنده تله‌متری سیستم (Real-time Audit Logs)</span>
-            </h3>
-            <span className="text-xs text-slate-400 font-mono">Auto-scrolling stream</span>
-          </div>
-
-          <div className="p-4 rounded-3xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-2.5 max-h-96 overflow-y-auto">
-            {systemLogs.map((log) => (
-              <div key={log.id} className="flex items-start gap-3 p-2 rounded-xl bg-slate-900/60 border border-slate-800/60">
-                <span className="text-[10px] text-slate-500 shrink-0">{log.timestamp}</span>
-                <span className={`px-2 py-0.2 rounded text-[10px] font-bold shrink-0 ${
-                  log.level === 'success' ? 'bg-emerald-950 text-emerald-300' :
-                  log.level === 'warn' ? 'bg-amber-950 text-amber-300' :
-                  log.level === 'error' ? 'bg-red-950 text-red-300' : 'bg-slate-800 text-slate-300'
-                }`}>
-                  [{log.module.toUpperCase()}]
-                </span>
-                <p className="text-slate-200 leading-relaxed">{log.message}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <UnifiedSystemLogViewer
+          logs={systemLogs}
+          onAddLog={(newLog) => setSystemLogs(prev => [newLog, ...prev])}
+          onClearLogs={() => setSystemLogs([])}
+          onShowToast={onShowToast}
+        />
       )}
 
       {/* ========================================================= */}

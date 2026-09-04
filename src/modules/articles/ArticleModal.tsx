@@ -30,20 +30,21 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, onClose }) 
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
-      <div 
-        className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-slate-700/80 p-6 md:p-8 shadow-2xl text-slate-100 max-h-[90vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 left-5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6">
+        <div 
+          className="relative w-full max-w-2xl rounded-3xl bg-slate-900 border border-slate-700/80 p-5 sm:p-6 md:p-8 shadow-2xl text-slate-100 my-4 sm:my-8 overflow-hidden"
+          onClick={e => e.stopPropagation()}
         >
-          <X className="w-5 h-5" />
-        </button>
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 sm:top-5 sm:left-5 p-1.5 sm:p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
         {/* Header */}
         <div className="space-y-4 mb-6">
@@ -122,6 +123,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, onClose }) 
           ))}
         </div>
 
+        </div>
       </div>
     </div>
   );

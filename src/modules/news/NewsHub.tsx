@@ -88,7 +88,7 @@ export const NewsHub: React.FC<NewsHubProps> = ({ onSelectArticle, onBackToHome,
             <h1 className="text-xl font-black text-white tracking-tight">رصدخانه اخبار فناوری، امنیت و وضعیت شبکه</h1>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            پوشش زنده و تحلیل تغییرات فیلترینگ، پروتکل‌های امنیتی، اخبار لینوکس و دنیای ارتباطات ایران و جهان.
+            پوشش زنده و تحلیل اختلالات زیرساخت، پروتکل‌های امنیتی، اخبار لینوکس و دنیای ارتباطات ایران و جهان.
           </p>
         </div>
 
@@ -182,7 +182,7 @@ export const NewsHub: React.FC<NewsHubProps> = ({ onSelectArticle, onBackToHome,
             }`}
           >
             <Radio className="w-3.5 h-3.5 text-red-400" />
-            <span>فیلترینگ و شبکه</span>
+            <span>اختلالات و پایش شبکه</span>
           </button>
 
           <button

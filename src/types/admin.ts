@@ -42,10 +42,22 @@ export interface AdminTelemetryStats {
 export interface AdminSystemLog {
   id: string;
   level: 'info' | 'warn' | 'error' | 'success';
-  module: 'n8n_ingest' | 'openrouter_ai' | 'supabase_db' | 'edge_cdn' | 'admin_auth' | 'telegram_bot';
+  module: 
+    | 'n8n_ingest' 
+    | 'openrouter_ai' 
+    | 'supabase_db' 
+    | 'edge_cdn' 
+    | 'admin_auth' 
+    | 'telegram_bot'
+    | 'cloudflare_worker'
+    | 'sitemap_bot'
+    | 'network_ping'
+    | 'automation_pipeline'
+    | string;
   message: string;
   timestamp: string;
   details?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface MusicTrack {
@@ -61,6 +73,11 @@ export interface MusicTrack {
   isSentToTelegram: boolean;
   telegramMessageId?: string;
   createdAt: string;
+  album?: string;
+  year?: number;
+  description?: string;
+  lyrics?: string;
+  lyricsFa?: string;
 }
 
 export interface AdminSupportTicket {

@@ -44,17 +44,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {/* Top Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-bold animate-fade-in shadow-inner">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>پورتال رسمی توزیع نودهای پایدار ضد فیلتر • جامعه @vpnbuying</span>
+              <span>پورتال رسمی پایش نودهای پایدار ارتباطات ابری • جامعه @vpnbuying</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight tracking-tight">
-              سامانه هوشمند <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-300 to-cyan-400">اتصال ضد DPI</span> با پینگ تضمینی
+              سامانه هوشمند <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-300 to-cyan-400">اتصال</span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-normal max-w-xl">
-              دسترسی آزاد و پایدار به کانفیگ‌های تست‌شده VLESS Reality، Hysteria 2 و پروکسی‌های اختصاصی تلگرام برای اپراتورهای همراه اول، ایرانسل، رایتل و اینترنت خانگی.
+              ارتباط پایدار و پرسرعت با نودهای سنجیده‌شده ابری و پروکسی‌های اختصاصی تلگرام برای تمامی اپراتورهای همراه و اینترنت خانگی.
             </p>
 
             {/* Quick Action CTA Buttons */}
@@ -64,7 +64,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 className="flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-sm shadow-xl shadow-purple-950/50 transition-all cursor-pointer"
               >
                 <Zap className="w-4 h-4" />
-                <span>دریافت کانفیگ‌های V2Ray</span>
+                <span>دریافت کانفیگ‌های اتصال</span>
               </a>
 
               <a
@@ -72,7 +72,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 className="flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-slate-200 font-bold text-sm transition-all"
               >
                 <Send className="w-4 h-4 text-cyan-400" />
-                <span>پروکسی تلگرام (۱ کلیک)</span>
+                <span>پروکسی تلگرام</span>
               </a>
 
               <button
@@ -91,7 +91,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               { label: 'پروتکل‌های فعال', value: 'VLESS / Hy2 / TUIC', icon: ShieldCheck, color: 'text-purple-400' },
               { label: 'میانگین پینگ', value: '۴۲ میلی‌ثانیه', icon: Activity, color: 'text-emerald-400' },
               { label: 'پایش مستمر', value: '۲۴ ساعته خودکار', icon: Zap, color: 'text-cyan-400' },
-              { label: 'اعضای جامعه', value: '+۲۸,۰۰۰ کاربر', icon: Users, color: 'text-indigo-400' }
+              { label: 'اعضای جامعه', value: '۳,۰۸۶ نفر', icon: Users, color: 'text-indigo-400' }
             ].map((stat, idx) => (
               <div key={idx} className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/90 text-center">
                 <stat.icon className={`w-4 h-4 mx-auto mb-1 ${stat.color}`} />

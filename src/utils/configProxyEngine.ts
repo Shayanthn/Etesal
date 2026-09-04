@@ -282,7 +282,7 @@ export function parseMtprotoProxy(uri: string, rawPostContext: string = ''): Ext
     const country = detectCountryFromText(rawPostContext, host);
     const isFakeTls = secret.startsWith('ee') || secret.length > 32;
 
-    const proxyName = `${country.flag} پروکسی ضد فیلتر ${isFakeTls ? 'TLS' : 'MTProto'} ${country.name.split('-')[0]}`;
+    const proxyName = `${country.flag} پروکسی اختصاصی ${isFakeTls ? 'TLS' : 'MTProto'} ${country.name.split('-')[0]}`;
 
     const mtprotoProxy: MtprotoProxy = {
       id: 'proxy-' + Math.random().toString(36).substring(2, 9),
@@ -390,7 +390,7 @@ export function generateTelegramPostMessage(
 ): { text: string; buttonText: string; buttonUrl: string } {
   if (item.type === 'mtproto' && item.mtprotoProxy) {
     const p = item.mtprotoProxy;
-    const text = `🚀 **پروکسی فوق‌سریع و ضد فیلتر تلگرام** ${p.flag}
+    const text = `🚀 **پروکسی فوق‌سریع تلگرام** ${p.flag}
 
 📌 **مشخصات سرور:**
 🏳️ کشور: \`${p.location}\`
@@ -417,7 +417,7 @@ export function generateTelegramPostMessage(
       c.operator === 'rightel' ? 'رایتل (Rightel)' :
       c.operator === 'wifi' ? 'اینترنت خانگی / مخابرات / شاتل' : 'تمام اپراتورها (سراسری)';
 
-    const text = `🔒 **کانفیگ اختصاصی و ضد فیلتر** ${c.flag}
+    const text = `🔒 **کانفیگ اختصاصی و پرسرعت** ${c.flag}
 
 📌 **مشخصات نود:**
 🌐 پروتکل: \`${c.protocol.toUpperCase()}\`
@@ -426,7 +426,7 @@ export function generateTelegramPostMessage(
 ⚡️ تاخیر (پینگ): \`${c.ping}ms\`
 📍 موقعیت: \`${c.location}\`
 
-📋 **کد اتصال (کلیک برای کپی):**
+📋 **کد اتصال (برای کپی لمس کنید):**
 \`\`\`
 ${c.configString}
 \`\`\`

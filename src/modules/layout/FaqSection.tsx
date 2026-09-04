@@ -18,8 +18,28 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ faqs }) => {
     setOpenId(prev => (prev === id ? null : id));
   };
 
+  // Structured Data (JSON-LD) for Google SERP FAQ Rich Snippets & AI Search Bots
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': faqs.map(faq => ({
+      '@type': 'Question',
+      'name': faq.question,
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': faq.answer
+      }
+    }))
+  };
+
   return (
     <section id="faqs" className="py-12 border-t border-slate-800/80">
+      {/* Search Engine / AI Crawlers FAQPage Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+
       <div className="space-y-6 max-w-4xl mx-auto">
         
         {/* Header */}

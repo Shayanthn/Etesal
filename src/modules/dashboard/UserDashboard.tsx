@@ -817,7 +817,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                     <div className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">
                       {client.name}
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">اتصال ۱ کلیک</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">اتصال مستقیم</div>
                   </a>
                 ))}
               </div>
@@ -1104,8 +1104,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
       {/* Top-up Wallet Modal */}
       {showTopUpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-md bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 md:p-8 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+            <div className="relative w-full max-w-md bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 md:p-8 shadow-2xl space-y-4 sm:space-y-5 my-4 sm:my-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
@@ -1156,7 +1157,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
             <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
               <span>درگاه شتابی و کریپتو (USDT):</span>
-              <span className="text-emerald-400 font-bold">تسویه آنی و ۱ کلیک</span>
+              <span className="text-emerald-400 font-bold">تسویه آنی و هوشمند</span>
             </div>
 
             <div className="flex items-center gap-3 pt-2">
@@ -1181,20 +1182,22 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* QR Code Scan Modal */}
       {showQrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-sm rounded-3xl bg-slate-900 border border-purple-500/30 p-6 shadow-2xl text-center space-y-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md">
+          <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+            <div className="relative w-full max-w-sm rounded-3xl bg-slate-900 border border-purple-500/30 p-5 sm:p-6 shadow-2xl text-center space-y-4 my-4">
             <h3 className="text-sm font-black text-white">اسکن سابسکریپشن اختصاصی</h3>
             <p className="text-xs text-slate-400">دوربین برنامه Hiddify یا v2rayNG را مقابل کد بگیرید:</p>
 
-            <div className="p-4 bg-white rounded-2xl inline-block mx-auto shadow-xl">
+            <div className="p-4 bg-white rounded-2xl inline-block mx-auto shadow-xl max-w-full overflow-hidden">
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(user.subscription.subscriptionUrl)}`}
                 alt="Subscription QR"
-                className="w-44 h-44 mx-auto"
+                className="w-40 h-40 sm:w-44 sm:h-44 mx-auto"
               />
             </div>
 
@@ -1206,6 +1209,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </button>
           </div>
         </div>
+      </div>
       )}
 
     </div>

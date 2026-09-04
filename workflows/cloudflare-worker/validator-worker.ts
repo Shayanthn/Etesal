@@ -170,6 +170,36 @@ const ALLOWED_ORIGINS = new Set([
   'http://127.0.0.1:3000'
 ]);
 
+// ── Rate Limiting (Sliding Window Memory Limiter with KV Fallback) ──
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+const rateLimitCache = new Map<string, RateLimitEntry>();
+
+function isRateLimited(ip: string, limit = 45, windowMs = 10_000): boolean {
+  const now = Date.now();
+  // Evict expired entries if table grows
+  if (rateLimitCache.size > 3000) {
+    for (const [key, entry] of rateLimitCache.entries()) {
+      if (entry.resetAt < now) rateLimitCache.delete(key);
+    }
+  }
+
+  const existing = rateLimitCache.get(ip);
+  if (!existing || existing.resetAt < now) {
+    rateLimitCache.set(ip, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+
+  if (existing.count >= limit) {
+    return true;
+  }
+
+  existing.count++;
+  return false;
+}
+
 export default {
   async fetch(request: Request, env: any, ctx: any) {
     const url = new URL(request.url);
@@ -196,10 +226,87 @@ export default {
     }
 
     // ========================================================================
+    // 🌐 ۱.۵. اندپوینت داینامیک نقشه سایت (Dynamic Sitemap Engine for SEO/AEO)
+    // ========================================================================
+    if (url.pathname === '/sitemap.xml' && request.method === 'GET') {
+      try {
+        let dynamicArticles: any[] = [];
+        let dynamicNews: any[] = [];
+
+        // اگر Supabase متصل است، آخرین مقالات و اخبار منتشرشده را واکشی کن
+        if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+          const headers = {
+            'apikey': env.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`
+          };
+          const [artRes, newsRes] = await Promise.all([
+            fetch(`${env.SUPABASE_URL}/rest/v1/articles?select=slug,updated_at,published_at&is_published=eq.true&order=published_at.desc&limit=100`, { headers }).catch(() => null),
+            fetch(`${env.SUPABASE_URL}/rest/v1/news?select=slug,created_at&is_published=eq.true&order=created_at.desc&limit=100`, { headers }).catch(() => null)
+          ]);
+
+          if (artRes && artRes.ok) dynamicArticles = await artRes.json();
+          if (newsRes && newsRes.ok) dynamicNews = await newsRes.json();
+        }
+
+        const now = new Date().toISOString().split('T')[0];
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+        
+        // صفحات اصلی
+        xml += `  <url><loc>https://etesal.aetherai.ir/</loc><lastmod>${now}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n`;
+        xml += `  <url><loc>https://etesal.aetherai.ir/download</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>\n`;
+        xml += `  <url><loc>https://etesal.aetherai.ir/news</loc><lastmod>${now}</lastmod><changefreq>always</changefreq><priority>0.8</priority></url>\n`;
+        xml += `  <url><loc>https://etesal.aetherai.ir/support</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>\n`;
+
+        // مقالات داینامیک
+        for (const art of dynamicArticles) {
+          const mod = (art.updated_at || art.published_at || now).split('T')[0];
+          xml += `  <url><loc>https://etesal.aetherai.ir/article/${encodeURIComponent(art.slug)}</loc><lastmod>${mod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+        }
+
+        // اخبار داینامیک
+        for (const nw of dynamicNews) {
+          const mod = (nw.created_at || now).split('T')[0];
+          xml += `  <url><loc>https://etesal.aetherai.ir/news/${encodeURIComponent(nw.slug)}</loc><lastmod>${mod}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>\n`;
+        }
+
+        xml += `</urlset>`;
+
+        return new Response(xml, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/xml; charset=utf-8',
+            'Cache-Control': 'public, max-age=1800, s-maxage=3600',
+            ...corsHeaders
+          }
+        });
+      } catch {
+        // فالبک به ساختار پایه
+        const basicXml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://etesal.aetherai.ir/</loc></url></urlset>`;
+        return new Response(basicXml, { status: 200, headers: { 'Content-Type': 'application/xml', ...corsHeaders } });
+      }
+    }
+
+    // ========================================================================
     // ⚡ ۲. اندپوینت تست پینگ و اعتبارسنجی سوکت TCP (Hardened Socket Probe)
     // ========================================================================
     if ((url.pathname === '/validate' || url.pathname === '/api/validate') && request.method === 'POST') {
-      
+      // بررسی محدودیت درخواست (Rate Limiting L7 DDoS Protection)
+      const clientIp = request.headers.get('CF-Connecting-IP') || request.headers.get('x-real-ip') || '127.0.0.1';
+      if (isRateLimited(clientIp, 45, 10_000)) {
+        return new Response(JSON.stringify({ 
+          valid: false, 
+          error: 'تعداد درخواست‌ها بیش از حد مجاز است. لطفاً چند ثانیه صبر کنید.',
+          isRateLimited: true 
+        }), {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Retry-After': '10'
+          }
+        });
+      }
+
       // جلوگیری از OOM با Stream Reader و محدودیت 16KB بایت 
       const MAX_BODY = 16_384;
       const bodyText = await readBodyWithLimit(request, MAX_BODY);

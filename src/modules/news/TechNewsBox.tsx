@@ -76,9 +76,6 @@ export const TechNewsBox: React.FC<TechNewsBoxProps> = ({ news, onSelectNews, on
             <div>
               <h2 className="text-base font-black text-white flex items-center gap-2">
                 <span>اخبار فناوری و شبکه</span>
-                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold border border-purple-500/30">
-                  ۱۰ خبر برتر
-                </span>
               </h2>
               <p className="text-[11px] text-slate-400 font-normal">
                 پایش لحظه‌ای زیرساخت اینترنت ایران و تحولات تکنولوژی جهان
@@ -254,7 +251,7 @@ export const TechNewsBox: React.FC<TechNewsBoxProps> = ({ news, onSelectNews, on
       <div className="relative z-10 pt-3 mt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
         <span className="flex items-center gap-1.5 text-slate-400">
           <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
-          <span>پوشش تمام پروتکل‌های V2Ray، ECH و اخبار فیلترینگ</span>
+          <span>پوشش تازه‌ترین تحولات شبکه، ECH و امنیت ارتباطات</span>
         </span>
         <span className="text-[10px] text-slate-500 font-mono">۱۰/۱۰ به‌روز</span>
       </div>

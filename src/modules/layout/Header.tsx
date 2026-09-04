@@ -4,12 +4,10 @@ import {
   Menu, 
   X, 
   ShieldCheck, 
-  BookOpen, 
   LogIn,
   LayoutDashboard,
   Sparkles,
-  Headphones,
-  ShieldAlert
+  Headphones
 } from 'lucide-react';
 import { BrandLogo } from '../../components/BrandLogo';
 import { Language, User } from '../../types';
@@ -59,50 +57,19 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            onClick={() => onNavigate('news')}
-            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
-              currentView === 'news' ? 'text-purple-400 font-bold' : 'hover:text-purple-400'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-            <span>اخبار و رصد شبکه</span>
-          </button>
-
-          <button
             onClick={() => onNavigate('support')}
             className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
               currentView === 'support' ? 'text-purple-400 font-bold' : 'hover:text-purple-400'
             }`}
           >
             <Headphones className="w-3.5 h-3.5 text-purple-400" />
-            <span>پشتیبانی و تیکت</span>
+            <span>پشتیبانی و ثبت تیکت</span>
           </button>
 
-          <button
-            onClick={() => onNavigate('admin')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all cursor-pointer ${
-              currentView === 'admin'
-                ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-950/50'
-                : 'text-amber-400 hover:text-amber-300 bg-amber-950/40 border border-amber-500/40 font-bold'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-            <span>مدیریت کل (Admin)</span>
-          </button>
-          
           {currentView === 'home' && (
-            <>
-              <a href="#configs" className="hover:text-purple-400 transition-colors">
-                <span>کانفیگ‌های V2Ray</span>
-              </a>
-              <a href="#articles" className="hover:text-purple-400 transition-colors flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                <span>پایگاه دانش</span>
-              </a>
-              <a href="#faqs" className="hover:text-purple-400 transition-colors">
-                <span>سوالات متداول</span>
-              </a>
-            </>
+            <a href="#faqs" className="hover:text-purple-400 transition-colors">
+              <span>سوالات متداول</span>
+            </a>
           )}
         </nav>
 
@@ -126,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
               <div className="text-right hidden sm:block">
                 <div className="text-xs font-bold text-white leading-tight">{currentUser.name}</div>
-                <div className="text-[10px] text-purple-300 font-mono">پنل کاربری VIP</div>
+                <div className="text-[10px] text-purple-300 font-mono">پنل کاربری</div>
               </div>
               <LayoutDashboard className="w-4 h-4 text-purple-300" />
             </button>
@@ -146,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-950/40 transition-all cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-                <span>ثبت‌نام VIP</span>
+                <span>ثبت‌نام</span>
               </button>
             </div>
           )}
@@ -185,7 +152,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <LayoutDashboard className="w-4 h-4 text-purple-400" />
                 <span>داشبورد کاربری {currentUser.name}</span>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-600">VIP</span>
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-2 pb-2">
@@ -213,14 +179,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
-            onClick={() => { onNavigate('news'); setMobileMenuOpen(false); }}
-            className="w-full flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-800 text-slate-200 text-xs text-right cursor-pointer"
-          >
-            <BookOpen className="w-4 h-4 text-cyan-400" />
-            <span>اخبار و رصدخانه شبکه</span>
-          </button>
-
-          <button
             onClick={() => { onNavigate('support'); setMobileMenuOpen(false); }}
             className="w-full flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-800 text-slate-200 text-xs text-right cursor-pointer"
           >
@@ -228,21 +186,6 @@ export const Header: React.FC<HeaderProps> = ({
             <span>پشتیبانی و ثبت تیکت</span>
           </button>
 
-          <button
-            onClick={() => { onNavigate('admin'); setMobileMenuOpen(false); }}
-            className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs font-bold text-right cursor-pointer"
-          >
-            <ShieldAlert className="w-4 h-4 text-amber-400" />
-            <span>داشبورد مدیریت کل (Master Admin)</span>
-          </button>
-          <a
-            href="#articles"
-            onClick={() => { onNavigate('home'); setMobileMenuOpen(false); }}
-            className="flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-800 text-slate-200 text-xs"
-          >
-            <BookOpen className="w-4 h-4 text-purple-400" />
-            <span>پایگاه دانش</span>
-          </a>
           <a
             href="#faqs"
             onClick={() => { onNavigate('home'); setMobileMenuOpen(false); }}

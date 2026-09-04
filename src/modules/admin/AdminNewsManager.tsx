@@ -41,12 +41,12 @@ export const AdminNewsManager: React.FC<AdminNewsManagerProps> = ({
   const [author, setAuthor] = useState('تیم امنیت و شبکه');
   const [readTimeMinutes, setReadTimeMinutes] = useState(4);
   const [imageUrl, setImageUrl] = useState('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80');
-  const [tagsRaw, setTagsRaw] = useState('فیلترینگ, امنیت, شبکه');
+  const [tagsRaw, setTagsRaw] = useState('اختلالات, امنیت, شبکه');
   const [isBreaking, setIsBreaking] = useState(false);
 
   const getCategoryLabel = (cat: NewsArticle['category']) => {
     switch (cat) {
-      case 'network_censorship': return 'اختلالات شبکه و فیلترینگ';
+      case 'network_censorship': return 'اختلالات و پایش شبکه';
       case 'security_privacy': return 'امنیت و حریم خصوصی';
       case 'tech_world': return 'دنیای تکنولوژی و لینوکس';
       case 'ai_dev': return 'هوش مصنوعی و ابزارها';
@@ -66,7 +66,7 @@ export const AdminNewsManager: React.FC<AdminNewsManagerProps> = ({
     setAuthor('تیم فنی');
     setReadTimeMinutes(3);
     setImageUrl('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80');
-    setTagsRaw('فیلترینگ, Reality, شبکه');
+    setTagsRaw('پروتکل, پایش, شبکه');
     setIsBreaking(false);
     setIsModalOpen(true);
   };
@@ -279,8 +279,9 @@ export const AdminNewsManager: React.FC<AdminNewsManagerProps> = ({
 
       {/* Add / Edit Article Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-3xl rounded-3xl bg-slate-900 border border-purple-500/40 p-6 shadow-2xl space-y-4 text-right max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md">
+          <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6">
+            <div className="relative w-full max-w-3xl rounded-3xl bg-slate-900 border border-purple-500/40 p-5 sm:p-6 shadow-2xl space-y-4 text-right my-4 sm:my-8">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-purple-400" />
@@ -302,7 +303,7 @@ export const AdminNewsManager: React.FC<AdminNewsManagerProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="مثال: آموزش تنظیم TLS Fragment برای دور زدن فیلترینگ DPI..."
+                  placeholder="مثال: آموزش تنظیم TLS Fragment برای پایداری ارتباطات..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
@@ -325,7 +326,7 @@ export const AdminNewsManager: React.FC<AdminNewsManagerProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="tls-fragment-dpi-bypass-guide"
+                    placeholder="tls-fragment-optimization-guide"
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-cyan-300 font-mono text-left focus:outline-none focus:border-purple-500"
@@ -339,7 +340,7 @@ export const AdminNewsManager: React.FC<AdminNewsManagerProps> = ({
                     onChange={(e) => setCategory(e.target.value as any)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-purple-500"
                   >
-                    <option value="network_censorship">اختلالات شبکه و فیلترینگ</option>
+                    <option value="network_censorship">اختلالات و پایش شبکه</option>
                     <option value="security_privacy">امنیت و حریم خصوصی</option>
                     <option value="tech_world">دنیای تکنولوژی و کامپیوتر</option>
                     <option value="ai_dev">هوش مصنوعی و ابزارها</option>
@@ -460,6 +461,7 @@ export const AdminNewsManager: React.FC<AdminNewsManagerProps> = ({
             </form>
           </div>
         </div>
+      </div>
       )}
 
     </div>

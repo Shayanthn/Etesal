@@ -14,6 +14,7 @@ export interface V2RayConfig {
   transport: string;
   verifiedAt: string;
   isOfficial?: boolean;
+  isEstimated?: boolean;
 }
 
 export interface MtprotoProxy {
@@ -28,6 +29,7 @@ export interface MtprotoProxy {
   verifiedAt: string;
   sponsorChannel?: string;
   isVip?: boolean;
+  isEstimated?: boolean;
 }
 
 export interface NewsItem {
@@ -35,7 +37,7 @@ export interface NewsItem {
   title: string;
   summary: string;
   content: string[];
-  category: 'فوری' | 'فیلترینگ' | 'پروتکل' | 'آموزش' | 'امنیت' | 'زیرساخت' | 'تکنولوژی' | string;
+  category: 'فوری' | 'اختلالات شبکه' | 'پایش' | 'پروتکل' | 'آموزش' | 'امنیت' | 'زیرساخت' | 'تکنولوژی' | string;
   source: string;
   sourceUrl?: string;
   timeAgo: string;

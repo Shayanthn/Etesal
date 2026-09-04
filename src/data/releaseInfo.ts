@@ -24,18 +24,18 @@ export const CURRENT_APP_RELEASE: AppReleaseInfo = {
   fileSizeMB: 6.8,
   minAndroidVersion: 'Android 7.0 (Nougat) یا بالاتر',
   targetAndroidVersion: 'Android 14 (API 34)',
-  downloadUrl: 'https://etesal.aetherai.ir/downloads/etesal-v6.0.0.apk',
-  sha256Checksum: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+  downloadUrl: '/downloads/etesal-v6.0.0.apk',
+  sha256Checksum: '3f3fc241ad9b96e136206eefce71b82a181ccff52634bcf359f353dd4bc3b2ee',
   changelog: [
     'بهینه‌سازی کامل هسته Sing-Box Core و پروتکل‌های Reality / Hysteria 2',
     'افزایش سرعت تاخیر اولیه اتصال به زیر ۴۵ میلی‌ثانیه',
-    'پشتیبانی ارتقایافته از سیستم جدید دور زدن فیلترینگ هوشمند همراه اول و ایرانسل',
+    'پشتیبانی ارتقایافته از سیستم مسیریابی هوشمند در همراه اول و ایرانسل',
     'حالت بهینه‌سازی باتری و مصرف رم در پس‌زمینه (Ultra Low Memory Mode)',
     'رفع باگ‌های اتصال خودکار در هنگام تغییر دیتای موبایل به وای‌فای'
   ],
   features: [
     {
-      title: 'هسته Sing-Box ضد فیلتر',
+      title: 'هسته ارتباطی Sing-Box Core',
       description: 'ترکیب پروتکل‌های نوین Hysteria 2 و VLESS Reality با شبیه‌سازی ترافیک معتبر TLS 1.3',
       icon: 'Zap'
     },
@@ -46,7 +46,7 @@ export const CURRENT_APP_RELEASE: AppReleaseInfo = {
     },
     {
       title: 'قابلیت تونل انتخابی (Split Tunneling)',
-      description: 'امکان استثنا کردن اپلیکیشن‌های بانکی و ایرانی از مسیر پراکسی با یک کلیک',
+      description: 'امکان استثنا کردن اپلیکیشن‌های بانکی و ایرانی از مسیر اتصال به صورت مستقیم',
       icon: 'Cpu'
     },
     {

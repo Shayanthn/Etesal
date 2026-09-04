@@ -192,8 +192,9 @@ export const AdminConfigProxyIngestionModal: React.FC<AdminConfigProxyIngestionM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="relative w-full max-w-5xl rounded-3xl bg-slate-900 border border-purple-500/40 p-6 shadow-2xl space-y-5 text-right max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6">
+        <div className="relative w-full max-w-5xl rounded-3xl bg-slate-900 border border-purple-500/40 p-5 sm:p-6 shadow-2xl space-y-5 text-right my-4 sm:my-8">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -440,6 +441,7 @@ tg://proxy?server=fra.proxy.com&port=443&secret=ee123..."
           </div>
         )}
 
+        </div>
       </div>
     </div>
   );

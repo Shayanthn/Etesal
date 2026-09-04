@@ -12,7 +12,7 @@ export const NotFoundPage: React.FC<{ onGoHome?: () => void }> = ({ onGoHome }) 
     
     setTimeout(() => {
       setIsScanning(false);
-      setScanMessage('سیگنال پایگاه اصلی پورتال اتصال پیدا شد! به خانه برگرد کاپیتان 📡✨');
+      setScanMessage('سیگنال پایگاه اصلی پورتال اتصال پیدا شد! به خانه برگرد جیگر 📡✨');
     }, 1500);
   };
 

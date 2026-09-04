@@ -31,8 +31,8 @@ export const InteractiveMascot: React.FC<MascotState> = ({
   return (
     <div className="flex flex-col items-center justify-center select-none">
       {/* Speech Bubble / Mascot Mood Quote */}
-      <div className="relative mb-2 transition-all duration-300">
-        <div className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold text-center border shadow-lg backdrop-blur-md transition-all duration-300 ${
+      <div className="relative mb-1 sm:mb-2 transition-all duration-300 max-w-[270px] sm:max-w-xs">
+        <div className={`px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-bold text-center border shadow-lg backdrop-blur-md transition-all duration-300 ${
           isError 
             ? 'bg-rose-950/80 text-rose-300 border-rose-500/40 animate-bounce' 
             : isSuccess 
@@ -49,11 +49,11 @@ export const InteractiveMascot: React.FC<MascotState> = ({
             isPasswordMode && !isPeeking ? 'چشمامو بستم، خیالت راحت نگات نمی‌کنم! 🙈' :
             isPeeking ? 'دزدکی دارم چک می‌کنم رمزو درست زدی؟ 👀' :
             isSubmitting ? 'در حال برقراری هندشیک امن با سرور... ⏳' :
-            'سلام کاپیتان! مشخصاتت رو دقیق بنویس تا چشمام دنبالت کنه ✨'
+            'سلام جیگر! مشخصاتت رو دقیق بنویس تا چشمام دنبالت کنه ✨'
           )}
         </div>
         {/* Tail */}
-        <div className={`w-2.5 h-2.5 rotate-45 mx-auto -mt-1 border-r border-b ${
+        <div className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rotate-45 mx-auto -mt-1 border-r border-b ${
           isError ? 'bg-rose-950 border-rose-500/40' :
           isSuccess ? 'bg-emerald-950 border-emerald-500/40' :
           isPasswordMode ? 'bg-purple-950 border-purple-500/40' :
@@ -62,7 +62,7 @@ export const InteractiveMascot: React.FC<MascotState> = ({
       </div>
 
       {/* Interactive Mascot SVG Canvas */}
-      <div className={`w-36 h-36 relative transition-transform duration-300 ${isError ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
+      <div className={`w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 relative transition-transform duration-300 ${isError ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
         <svg 
           viewBox="0 0 200 200" 
           className="w-full h-full drop-shadow-2xl overflow-visible"

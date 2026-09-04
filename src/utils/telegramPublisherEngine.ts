@@ -96,7 +96,7 @@ export function formatSingleConfigPost(config: TelegramConfigItem): string {
   const location = config.location || 'سرور بین‌المللی اختصاصی';
   const protocol = (config.protocol || 'VLESS').toUpperCase();
 
-  return `🔒 کانفیگ اختصاصی و ضد فیلتر ${flag}
+  return `🔒 کانفیگ اختصاصی و پرسرعت ${flag}
 
 🌐 پروتکل: ${protocol} (پورت ۴۴۳)
 🛡 امنیت: TLS 1.3 / TCP Reality

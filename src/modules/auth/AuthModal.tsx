@@ -86,7 +86,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setIsPasswordFocused(false);
       const percent = Math.min(100, Math.max(15, (length / 25) * 100));
       setLookPercentage(percent);
-      setMascotMessage('حواسم به یوزرنیمت هست کاپیتان! 🤖');
+      setMascotMessage('حواسم به یوزرنیمت هست جیگر! 🤖');
     }
   };
 
@@ -212,8 +212,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <>
       {/* Moved RecoveryEmailPromptModal to the end of the fragment to ensure it stacks on top of the fixed auth modal overlay */}
       {!showRecoveryPrompt && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-        <div className="relative w-full max-w-md my-auto rounded-3xl bg-slate-900 border border-purple-500/30 p-6 md:p-8 shadow-2xl shadow-purple-950/50 text-right overflow-hidden">
+      <div className="fixed inset-0 z-[60] overflow-y-auto bg-slate-950/85 backdrop-blur-md">
+        <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6 text-right">
+          <div className="relative w-full max-w-md my-auto rounded-3xl bg-slate-900 border border-purple-500/30 p-4 sm:p-6 md:p-8 shadow-2xl shadow-purple-950/50 text-right overflow-hidden">
           
           {/* Glow ambient background */}
           <div className="absolute -top-20 -right-20 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
@@ -222,13 +223,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-5 left-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors z-20 cursor-pointer"
+            className="absolute top-3.5 left-3.5 sm:top-5 sm:left-5 p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors z-20 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Mascot Header */}
-          <div className="pt-2 pb-4">
+          <div className="pt-1 sm:pt-2 pb-2 sm:pb-4">
             <InteractiveMascot
               lookPercentage={lookPercentage}
               isPasswordMode={isPasswordFocused}
@@ -241,33 +242,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
 
           {/* Tab Switcher (Login vs Register) */}
-          <div className="flex items-center p-1 rounded-2xl bg-slate-950 border border-slate-800 mb-5 relative z-10">
+          <div className="flex items-center p-1 rounded-2xl bg-slate-950 border border-slate-800 mb-4 sm:mb-5 relative z-10">
             <button
               type="button"
               onClick={() => { setMode('login'); setIsError(false); }}
-              className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`flex-1 py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center ${
                 mode === 'login'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              ورود با نام کاربری
+              <span>ورود با نام کاربری</span>
             </button>
             <button
               type="button"
               onClick={() => { setMode('register'); setIsError(false); }}
-              className={`flex-1 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`flex-1 py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center ${
                 mode === 'register'
                   ? 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              ثبت‌نام سریع (بدون نیاز به ایمیل)
+              <span>ثبت‌نام سریع (بدون ایمیل)</span>
             </button>
           </div>
 
           {/* Form Body */}
-          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 relative z-10">
             
             {/* Username */}
             <div className="space-y-1.5">
@@ -280,7 +281,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   onChange={e => handleInputChange(e, setUsername)}
                   onFocus={() => handleInputFocus('text', username.length)}
                   onBlur={handleInputBlur}
-                  placeholder="مثال: shayan_user"
+                  placeholder="مثال: user_vip"
                   className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-purple-500 transition-colors text-left font-mono"
                   dir="ltr"
                   autoFocus
@@ -448,6 +449,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           </form>
 
+          </div>
         </div>
       </div>
       )}

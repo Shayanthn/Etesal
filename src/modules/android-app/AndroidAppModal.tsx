@@ -26,42 +26,46 @@ export const AndroidAppModal: React.FC<AndroidAppModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div 
-        className="relative w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-700/80 p-6 shadow-2xl text-slate-100 overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Background ambient glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 left-5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md animate-fade-in"
+      onClick={onClose}
+    >
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6">
+        <div 
+          className="relative w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-700/80 p-5 sm:p-6 shadow-2xl text-slate-100 my-4 sm:my-8 overflow-hidden"
+          onClick={e => e.stopPropagation()}
         >
-          <X className="w-5 h-5" />
-        </button>
+          {/* Background ambient glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <BrandLogo size="md" showText={false} />
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-black text-white">دانلود اپلیکیشن اندروید اتصال</h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                نسخه v6.0.4
-              </span>
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 sm:top-5 sm:left-5 p-1.5 sm:p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-5 sm:mb-6">
+            <BrandLogo size="md" showText={false} />
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-white">دانلود اپلیکیشن اندروید اتصال</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  نسخه v6.0.4
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">ارتباط رمزنگاری‌شده و بهینه‌سازی ترافیک</p>
             </div>
-            <p className="text-xs text-slate-400">هسته اختصاصی Sing-Box و دورزننده DPI</p>
           </div>
-        </div>
 
-        {/* Features Checklist */}
-        <div className="grid grid-cols-2 gap-2.5 mb-6">
+          {/* Features Checklist */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 mb-5 sm:mb-6">
           {[
-            { icon: ShieldCheck, text: 'بای‌پس کامل فیلترینگ DPI' },
-            { icon: Cpu, text: 'پشتیبانی از Hysteria 2 و Reality' },
+            { icon: ShieldCheck, text: 'رمزنگاری پیشرفته ترافیک و امنیت بالا' },
+            { icon: Cpu, text: 'پشتیبانی از پروتکل‌های پرسرعت نوین' },
             { icon: Layers, text: 'تفکیک هوشمند ترافیک سایت‌های ایرانی' },
             { icon: Smartphone, text: 'پشتیبانی از اندروید ۶ تا ۱۵' }
           ].map((item, idx) => (
@@ -129,6 +133,7 @@ export const AndroidAppModal: React.FC<AndroidAppModalProps> = ({
           <p className="leading-relaxed">
             اپلیکیشن متن‌باز است و هیچ لاگی از فعالیت وب شما ثبت نمی‌کند. تمامی ارتباطات به صورت سرتاسری رمزنگاری می‌شوند.
           </p>
+        </div>
         </div>
       </div>
     </div>

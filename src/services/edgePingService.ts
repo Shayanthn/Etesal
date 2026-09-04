@@ -23,6 +23,7 @@ export interface PingValidationResult {
   isHealthy: boolean;
   operator?: string;
   protocol?: string;
+  isEstimated?: boolean;
   error?: string;
 }
 
@@ -57,7 +58,8 @@ export async function validateEdgeConfig(configString: string): Promise<PingVali
         latencyMs: data.latencyMs || Math.round(performance.now() - startTime),
         isHealthy: data.isHealthy ?? true,
         operator: data.operator,
-        protocol: data.protocol
+        protocol: data.protocol,
+        isEstimated: false
       };
     }
   } catch {
@@ -73,7 +75,8 @@ export async function validateEdgeConfig(configString: string): Promise<PingVali
     valid: true,
     latencyMs: Math.max(35, Math.min(120, measured + Math.floor(Math.random() * 25) - 5 + (isReality ? 35 : isHy2 ? 30 : 55))),
     isHealthy: true,
-    operator: isHy2 ? 'irancell' : isReality ? 'mci' : 'all'
+    operator: isHy2 ? 'irancell' : isReality ? 'mci' : 'all',
+    isEstimated: true
   };
 }
 
@@ -110,7 +113,8 @@ export async function validateEdgeProxy(proxy: MtprotoProxy): Promise<PingValida
       return {
         valid: data.valid ?? true,
         latencyMs: data.latencyMs || Math.round(performance.now() - startTime),
-        isHealthy: data.isHealthy ?? true
+        isHealthy: data.isHealthy ?? true,
+        isEstimated: false
       };
     }
   } catch {
@@ -121,7 +125,8 @@ export async function validateEdgeProxy(proxy: MtprotoProxy): Promise<PingValida
   return {
     valid: true,
     latencyMs: isFakeTls ? Math.floor(Math.random() * 15) + 32 : Math.floor(Math.random() * 25) + 60,
-    isHealthy: true
+    isHealthy: true,
+    isEstimated: true
   };
 }
 
@@ -170,6 +175,7 @@ export async function runBatchEdgePing(
       return {
         ...c,
         ping: res.latencyMs,
+        isEstimated: res.isEstimated,
         verifiedAt: 'لحظاتی پیش'
       };
     } catch {
@@ -187,6 +193,7 @@ export async function runBatchEdgePing(
       return {
         ...p,
         ping: res.latencyMs,
+        isEstimated: res.isEstimated,
         verifiedAt: 'لحظاتی پیش'
       };
     } catch {

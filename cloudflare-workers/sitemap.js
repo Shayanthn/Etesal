@@ -28,7 +28,7 @@ export default {
 
     // ۱. تولید و هندل فایل robots.txt
     if (url.pathname === '/robots.txt') {
-      const robotsContent = `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
+      const robotsContent = `User-agent: *\nAllow: /\nAllow: /article/\nAllow: /news/\nAllow: /download\nAllow: /support\nDisallow: /admin/\nDisallow: /dashboard/\nDisallow: /api/\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
       return new Response(robotsContent, {
         status: 200,
         headers: {
@@ -101,9 +101,24 @@ export default {
       parts.push(`<?xml version="1.0" encoding="UTF-8"?>\n`);
       parts.push(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`);
 
-      // صفحه اصلی
+      // صفحه اصلی و صفحات مرجع
       parts.push(`  <url>\n`);
       parts.push(`    <loc>${xmlEscape(baseUrl)}/</loc>\n`);
+      parts.push(`    <lastmod>${latestUpdate}</lastmod>\n`);
+      parts.push(`  </url>\n`);
+
+      parts.push(`  <url>\n`);
+      parts.push(`    <loc>${xmlEscape(baseUrl)}/download</loc>\n`);
+      parts.push(`    <lastmod>${latestUpdate}</lastmod>\n`);
+      parts.push(`  </url>\n`);
+
+      parts.push(`  <url>\n`);
+      parts.push(`    <loc>${xmlEscape(baseUrl)}/news</loc>\n`);
+      parts.push(`    <lastmod>${latestUpdate}</lastmod>\n`);
+      parts.push(`  </url>\n`);
+
+      parts.push(`  <url>\n`);
+      parts.push(`    <loc>${xmlEscape(baseUrl)}/support</loc>\n`);
       parts.push(`    <lastmod>${latestUpdate}</lastmod>\n`);
       parts.push(`  </url>\n`);
 

@@ -1,16 +1,37 @@
-# Technical SEO Robots.txt for Etesal Hub
+# Technical SEO & AI Search Engine Rules (AEO & GEO Optimization)
 User-agent: *
 Allow: /
 Allow: /article/
 Allow: /news/
+Allow: /support
+Allow: /download
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /support/
 Disallow: /api/
-Disallow: /*?*
 
-# Crawl Delay
-Crawl-delay: 1
+# AI Search & Answer Engine Bots (Full Access to Educational & News Content)
+User-agent: Google-Extended
+Allow: /
+Allow: /article/
+Allow: /news/
 
-# Sitemap (Intercepted by Cloudflare Worker)
+User-agent: GPTBot
+Allow: /
+Allow: /article/
+Allow: /news/
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /article/
+Allow: /news/
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /article/
+Allow: /news/
+
+User-agent: CCBot
+Allow: /
+
+# Sitemap
 Sitemap: https://etesal.aetherai.ir/sitemap.xml
