@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { 
   User as UserType, 
@@ -8,6 +8,11 @@ import {
   DedicatedConfigProduct,
   WalletTransaction
 } from '../../types';
+import { AdminSupportTicket } from '../../types/admin';
+import { 
+  createSupportTicket, 
+  fetchUserTickets 
+} from '../../services/ticketsService';
 import { 
   ShieldCheck, 
   Zap, 
@@ -109,10 +114,29 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   });
 
   // Support Tickets State
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [userTickets, setUserTickets] = useState<AdminSupportTicket[]>([]);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(false);
   const [newTicketSubject, setNewTicketSubject] = useState('');
   const [newTicketMsg, setNewTicketMsg] = useState('');
   const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+
+  const loadTickets = async () => {
+    setIsLoadingTickets(true);
+    try {
+      const list = await fetchUserTickets(user.id);
+      setUserTickets(list);
+    } catch {
+      // Fallback handled inside service
+    } finally {
+      setIsLoadingTickets(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'support') {
+      loadTickets();
+    }
+  }, [activeTab, user.id]);
 
   // Stats calculation
   const totalGB = user.subscription?.totalTrafficGB || 15;
@@ -154,7 +178,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     });
   };
 
-  const handleSendTicket = (e: React.FormEvent) => {
+  const handleSendTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTicketSubject.trim() || !newTicketMsg.trim()) {
       onShowToast({
@@ -166,34 +190,39 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     }
 
     setIsSubmittingTicket(true);
-    setTimeout(() => {
-      const newTicket: SupportTicket = {
-        id: 'TCK-' + Math.floor(1000 + Math.random() * 9000),
-        subject: newTicketSubject,
-        status: 'open',
-        createdAt: 'هم‌اکنون',
-        lastReply: 'در صف بررسی تیم فنی',
-        messages: [
-          {
-            id: 'msg_' + Date.now(),
-            sender: 'user',
-            text: newTicketMsg,
-            timestamp: 'هم‌اکنون'
-          }
-        ]
-      };
-
-      setTickets([newTicket, ...tickets]);
-      setNewTicketSubject('');
-      setNewTicketMsg('');
-      setIsSubmittingTicket(false);
-
-      onShowToast({
-        title: 'تیکت ارسال شد 🎫',
-        description: 'کارشناسان شبکه اتصال در کمتر از ۱۵ دقیقه پاسخ خواهند داد.',
-        type: 'success'
+    try {
+      const res = await createSupportTicket({
+        subject: newTicketSubject.trim(),
+        category: 'connection',
+        operator: 'mci',
+        userName: user.name || user.username || 'کاربر سیستم',
+        userEmail: user.email || user.recoveryEmail,
+        message: newTicketMsg.trim(),
+        userId: user.id
       });
-    }, 600);
+
+      if (res.success && res.ticket) {
+        setUserTickets(prev => [res.ticket!, ...prev]);
+        setNewTicketSubject('');
+        setNewTicketMsg('');
+
+        onShowToast({
+          title: `تیکت ${res.ticket.id} ثبت شد 🎫`,
+          description: 'تیکت شما به صف بررسی کارشناسان ارسال شد و کد پیگیری صادر گردید.',
+          type: 'success'
+        });
+      } else {
+        throw new Error(res.error || 'خطا در ثبت تیکت');
+      }
+    } catch {
+      onShowToast({
+        title: 'خطا در ثبت تیکت 🛑',
+        description: 'امکان برقراری ارتباط با سرور وجود نداشت. تیکت در کش محلی ذخیره شد.',
+        type: 'error'
+      });
+    } finally {
+      setIsSubmittingTicket(false);
+    }
   };
 
   // افزایش موجودی کیف پول
@@ -360,7 +389,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           { id: 'wallet', label: `کیف پول و خرید کانفیگ (${walletBalance.toLocaleString('fa-IR')} ت)`, icon: Wallet, highlight: true },
           { id: 'subscription', label: 'سابسکریپشن و اتصال', icon: Zap },
           { id: 'devices', label: `دستگاه‌ها (${sessions.length})`, icon: Smartphone },
-          { id: 'support', label: `پشتیبانی (${tickets.length})`, icon: Headphones },
+          { id: 'support', label: `پشتیبانی (${userTickets.length})`, icon: Headphones },
           { id: 'security', label: 'امنیت و بازیابی رمز', icon: Shield }
         ].map(tab => (
           <button
@@ -927,48 +956,80 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
           {/* Ticket History */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-400">تاریخچه تیکت‌های شما:</h4>
-            {tickets.length === 0 ? (
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-400">تاریخچه تیکت‌های شما:</h4>
+              <button
+                onClick={loadTickets}
+                disabled={isLoadingTickets}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${isLoadingTickets ? 'animate-spin text-purple-400' : ''}`} />
+                <span>بروزرسانی وضعیت تیکت‌ها</span>
+              </button>
+            </div>
+
+            {isLoadingTickets && userTickets.length === 0 ? (
+              <div className="p-6 rounded-2xl bg-slate-950/40 border border-slate-800 text-center text-xs text-slate-400">
+                در حال فراخوانی تیکت‌ها از سرور...
+              </div>
+            ) : userTickets.length === 0 ? (
               <div className="p-6 rounded-2xl bg-slate-950/40 border border-dashed border-slate-800 text-center space-y-2">
                 <Headphones className="w-8 h-8 text-slate-600 mx-auto" />
                 <div className="text-xs font-bold text-slate-400">هنوز تیکتی ثبت نکرده‌اید</div>
                 <p className="text-[11px] text-slate-500">هرگونه سوال، قطعی یا درخواست ارتقا را از طریق فرم بالا مطرح فرمایید.</p>
               </div>
             ) : (
-              tickets.map(t => (
+              userTickets.map(t => (
                 <div
                   key={t.id}
                   className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white">{t.subject}</span>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">{t.id}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-purple-950/50 text-purple-300 border border-purple-800/40 font-mono">
+                        {t.operator.toUpperCase()}
+                      </span>
                     </div>
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      t.status === 'answered' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      t.status === 'answered' || t.status === 'resolved'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                        : t.status === 'in_progress'
+                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                     }`}>
-                      {t.status === 'answered' ? 'پاسخ داده شده' : 'در انتظار پاسخ'}
+                      {t.status === 'answered' ? 'پاسخ داده شده' : t.status === 'resolved' ? 'حل شده' : t.status === 'in_progress' ? 'درحال بررسی تیم فنی' : 'در صف پاسخ'}
                     </span>
                   </div>
 
                   <div className="space-y-2 pt-2 border-t border-slate-900">
-                    {t.messages.map(m => (
-                      <div
-                        key={m.id}
-                        className={`p-3 rounded-xl text-xs leading-relaxed ${
-                          m.sender === 'support' 
-                            ? 'bg-purple-950/30 border border-purple-800/30 text-purple-200' 
-                            : 'bg-slate-900 border border-slate-800 text-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                          <span>{m.sender === 'support' ? '🛡️ پشتیبان شبکه اتصال' : '👤 شما'}</span>
-                          <span>{m.timestamp}</span>
-                        </div>
-                        <p>{m.text}</p>
+                    {/* User's original message */}
+                    <div className="p-3 rounded-xl text-xs leading-relaxed bg-slate-900 border border-slate-800 text-slate-300">
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                        <span>👤 پیام شما ({t.userName})</span>
+                        <span>{new Date(t.createdAt).toLocaleString('fa-IR')}</span>
                       </div>
-                    ))}
+                      <p className="whitespace-pre-line">{t.message}</p>
+                    </div>
+
+                    {/* Admin Reply */}
+                    {t.replyMessage && (
+                      <div className="p-3.5 rounded-xl text-xs leading-relaxed bg-purple-950/40 border border-purple-800/50 text-purple-200 space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] text-purple-400 font-bold">
+                          <span className="flex items-center gap-1.5">
+                            <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                            <span>پاسخ رسمی پشتیبان ارشد شبکه اتصال</span>
+                          </span>
+                          {t.repliedAt && (
+                            <span className="font-mono text-purple-400/80">
+                              {new Date(t.repliedAt).toLocaleString('fa-IR')}
+                            </span>
+                          )}
+                        </div>
+                        <p className="whitespace-pre-line text-purple-100">{t.replyMessage}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))

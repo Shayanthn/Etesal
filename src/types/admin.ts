@@ -72,7 +72,7 @@ export interface AdminSupportTicket {
   userEmail?: string;
   telegramUsername?: string;
   message: string;
-  status: 'pending' | 'in_progress' | 'resolved' | 'closed';
+  status: 'pending' | 'in_progress' | 'resolved' | 'closed' | 'answered';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   replyMessage?: string;
   repliedAt?: string;

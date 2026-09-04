@@ -1,5 +1,7 @@
 import { getSupabase } from './supabaseClient';
 import { V2RayConfig, MtprotoProxy } from '../types';
+import { SAMPLE_CONFIGS } from '../data/configs.data';
+import { SAMPLE_PROXIES } from '../data/proxies.data';
 
 const LOCAL_CONFIGS_KEY = 'etesal_configs_vault';
 const LOCAL_PROXIES_KEY = 'etesal_proxies_vault';
@@ -16,12 +18,7 @@ export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Supabase fetchLiveConfigs error:', error);
-      return [];
-    }
-
-    if (data) {
+    if (!error && data && data.length > 0) {
       return data.map((item: any) => ({
         id: item.id,
         name: item.name,
@@ -38,17 +35,19 @@ export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
         isOfficial: item.is_official ?? true
       }));
     }
-    return [];
   }
 
   // Local fallback
   try {
     const raw = localStorage.getItem(LOCAL_CONFIGS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.length > 0) return parsed;
+    }
   } catch {
     // Ignore
   }
-  return [];
+  return SAMPLE_CONFIGS;
 }
 
 /**
@@ -63,12 +62,7 @@ export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
       .eq('is_active', true)
       .order('ping', { ascending: true });
 
-    if (error) {
-      console.error('Supabase fetchLiveProxies error:', error);
-      return [];
-    }
-
-    if (data) {
+    if (!error && data && data.length > 0) {
       return data.map((item: any) => ({
         id: item.id,
         name: item.name,
@@ -82,17 +76,19 @@ export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
         isVip: false
       }));
     }
-    return [];
   }
 
   try {
     const raw = localStorage.getItem(LOCAL_PROXIES_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.length > 0) return parsed;
+    }
   } catch {
     // Ignore
   }
 
-  return [];
+  return SAMPLE_PROXIES;
 }
 
 /**

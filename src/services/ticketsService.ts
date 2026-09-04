@@ -3,6 +3,7 @@ import { AdminSupportTicket } from '../types/admin';
 import { INITIAL_SUPPORT_TICKETS } from '../data/adminData';
 
 const LOCAL_TICKETS_STORAGE_KEY = 'etesal_support_tickets_vault';
+export const USER_SUBMITTED_TICKETS_KEY = 'etesal_user_submitted_tickets';
 
 export interface CreateTicketParams {
   subject: string;
@@ -23,15 +24,92 @@ export interface TicketOperationResult {
 }
 
 /**
+ * Fetches tickets submitted by a specific logged-in user
+ */
+export async function fetchUserTickets(userId: string): Promise<AdminSupportTicket[]> {
+  const supabase = getSupabase();
+  if (supabase && userId) {
+    try {
+      const { data, error } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        return data.map((item: any) => ({
+          id: item.ticket_code || item.id,
+          subject: item.subject,
+          category: item.category || 'connection',
+          operator: item.operator || 'mci',
+          userName: item.user_name,
+          userEmail: item.user_email,
+          telegramUsername: item.telegram_username,
+          message: item.message,
+          status: item.status || 'pending',
+          priority: item.priority || 'medium',
+          replyMessage: item.reply_message,
+          repliedAt: item.replied_at,
+          createdAt: item.created_at || new Date().toISOString(),
+          updatedAt: item.updated_at || new Date().toISOString()
+        }));
+      }
+    } catch {
+      // Fallback to local
+    }
+  }
+
+  const userTickets = getUserSubmittedTickets();
+  return userTickets;
+}
+
+/**
+ * Loads tickets submitted by this user from localStorage
+ */
+export function getUserSubmittedTickets(): AdminSupportTicket[] {
+  try {
+    const raw = localStorage.getItem(USER_SUBMITTED_TICKETS_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as AdminSupportTicket[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Persists a newly submitted ticket in user's local history
+ */
+export function saveUserSubmittedTicket(ticket: AdminSupportTicket): void {
+  try {
+    const existing = getUserSubmittedTickets();
+    const filtered = existing.filter(t => t.id !== ticket.id);
+    localStorage.setItem(USER_SUBMITTED_TICKETS_KEY, JSON.stringify([ticket, ...filtered]));
+  } catch {
+    // Ignore storage quota error
+  }
+}
+
+/**
+ * Updates a ticket in user's local history (e.g. after fetching admin reply)
+ */
+export function updateUserSubmittedTicket(updated: AdminSupportTicket): void {
+  try {
+    const existing = getUserSubmittedTickets();
+    const list = existing.map(t => t.id === updated.id ? updated : t);
+    localStorage.setItem(USER_SUBMITTED_TICKETS_KEY, JSON.stringify(list));
+  } catch {
+    // Ignore storage quota error
+  }
+}
+
+/**
  * Generate cryptographic human-friendly ticket tracking code (e.g. TCK-A1B2C3D4E5F6)
  */
 export function generateTicketCode(): string {
-  // Use crypto for cryptographically secure, unguessable ticket codes
-  // We remove hyphens and take 24 chars, total length 28 (fits in VARCHAR(30))
   const uuid = typeof crypto !== 'undefined' && crypto.randomUUID 
     ? crypto.randomUUID() 
-    : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15); // Fallback
-  return 'TCK-' + uuid.replace(/-/g, '').substring(0, 24).toUpperCase();
+    : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  return 'TCK-' + uuid.replace(/-/g, '').substring(0, 20).toUpperCase();
 }
 
 /**
@@ -69,7 +147,7 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
   const now = new Date().toISOString();
 
   const newTicket: AdminSupportTicket = {
-    id: 'tck_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6),
+    id: code,
     subject: params.subject.trim(),
     category: params.category,
     operator: params.operator,
@@ -86,78 +164,109 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
   const supabase = getSupabase();
 
   if (supabase) {
+    const insertPayload: any = {
+      ticket_code: code,
+      user_id: params.userId || null,
+      user_name: newTicket.userName,
+      user_email: newTicket.userEmail || null,
+      telegram_username: newTicket.telegramUsername || null,
+      subject: newTicket.subject,
+      category: newTicket.category,
+      operator: newTicket.operator,
+      priority: newTicket.priority,
+      status: 'pending',
+      message: newTicket.message
+    };
+
+    // For unauthenticated guest submissions, do NOT call .select()
+    // because PostgreSQL RLS allows anon to INSERT under "Guest Ticket Submission",
+    // but anon cannot SELECT from support_tickets directly (only via get_ticket_by_code RPC).
+    if (!params.userId) {
+      const { error } = await supabase
+        .from('support_tickets')
+        .insert([insertPayload]);
+
+      if (error) {
+        console.error('Supabase createSupportTicket error (guest):', error);
+        return { success: false, error: error.message || 'خطا در ثبت تیکت در پایگاه داده' };
+      }
+
+      saveUserSubmittedTicket(newTicket);
+      return { success: true, ticket: newTicket };
+    }
+
+    // For authenticated users
     const { data, error } = await supabase
       .from('support_tickets')
-      .insert([
-        {
-          user_id: params.userId || null,
-          user_name: newTicket.userName,
-          user_email: newTicket.userEmail,
-          telegram_username: newTicket.telegramUsername,
-          subject: newTicket.subject,
-          category: newTicket.category,
-          operator: newTicket.operator,
-          priority: newTicket.priority,
-          status: newTicket.status,
-          message: newTicket.message
-        }
-      ])
+      .insert([insertPayload])
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase createSupportTicket error:', error);
-      return { success: false, error: 'خطا در ثبت تیکت: مشکل در ارتباط با سرور' };
-    }
-
-    if (data) {
+      console.error('Supabase createSupportTicket error (authenticated):', error);
+      // Retry without select
+      const { error: insertErr } = await supabase
+        .from('support_tickets')
+        .insert([insertPayload]);
+      if (insertErr) {
+        return { success: false, error: insertErr.message || 'خطا در ثبت تیکت در پایگاه داده' };
+      }
+    } else if (data) {
       newTicket.id = data.ticket_code || data.id;
     }
 
+    saveUserSubmittedTicket(newTicket);
     return { success: true, ticket: newTicket };
   }
 
   // Local Offline Mode
-  newTicket.id = generateTicketCode();
   const vault = getLocalTicketsVault();
   saveLocalTicketsVault([newTicket, ...vault]);
+  saveUserSubmittedTicket(newTicket);
   return { success: true, ticket: newTicket };
 }
 
 /**
- * Fetches all tickets (For Master Admin Dashboard)
+ * Fetches ticket by tracking code (uses secure RPC get_ticket_by_code)
  */
 export async function fetchTicketByCode(code: string): Promise<AdminSupportTicket | null> {
+  const cleanCode = code.trim().toUpperCase();
   const supabase = getSupabase();
   if (supabase) {
     try {
-      const { data, error } = await supabase.rpc('get_ticket_by_code', { p_ticket_code: code });
+      const { data, error } = await supabase.rpc('get_ticket_by_code', { p_ticket_code: cleanCode });
       
       if (!error && data && data.length > 0) {
         const item = data[0];
-        return {
-          id: item.ticket_code, // Use code as ID for guests
+        const ticket: AdminSupportTicket = {
+          id: item.ticket_code,
           subject: item.subject,
           category: item.category || 'connection',
           operator: item.operator || 'mci',
-          userName: 'Guest',
+          userName: 'کاربر اتصال',
           message: item.message,
           status: item.status || 'pending',
           priority: 'medium',
           replyMessage: item.reply_message,
           repliedAt: item.replied_at,
           createdAt: item.created_at || new Date().toISOString(),
-          updatedAt: item.created_at || new Date().toISOString()
-        } as AdminSupportTicket;
+          updatedAt: item.replied_at || item.created_at || new Date().toISOString()
+        };
+        updateUserSubmittedTicket(ticket);
+        return ticket;
       }
     } catch {
       // Fallback below
     }
   }
 
-  // Local Offline Mode fallback
+  // Local user tickets or offline vault fallback
+  const userTickets = getUserSubmittedTickets();
+  const userFound = userTickets.find(t => t.id.toUpperCase() === cleanCode);
+  if (userFound) return userFound;
+
   const vault = getLocalTicketsVault();
-  const ticket = vault.find(t => t.id === code || (t as any).ticket_code === code || (t as any).ticketCode === code);
+  const ticket = vault.find(t => t.id === cleanCode || (t as any).ticket_code === cleanCode || (t as any).ticketCode === cleanCode);
   return ticket || null;
 }
 

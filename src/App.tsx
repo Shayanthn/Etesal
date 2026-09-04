@@ -44,6 +44,7 @@ import { NewsArticle } from './types/news';
 import { getSavedLocalSession, logoutUser, saveLocalSession, syncSessionWithSupabase } from './services/authService';
 import { fetchArticleBySlug, fetchArticles, fetchNews } from './services/contentService';
 import { fetchLiveConfigs, fetchLiveProxies } from './services/configDbService';
+import { runBatchEdgePing } from './services/edgePingService';
 
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -203,13 +204,16 @@ export const App: React.FC = () => {
   const handleRefreshPing = async () => {
     setIsTestingPing(true);
     try {
-      const c = await fetchLiveConfigs();
-      const p = await fetchLiveProxies();
-      if (c && c.length) setConfigs(c);
-      if (p && p.length) setProxies(p);
+      const currentConfigs = configs.length ? configs : await fetchLiveConfigs();
+      const currentProxies = proxies.length ? proxies : await fetchLiveProxies();
+
+      const { updatedConfigs, updatedProxies } = await runBatchEdgePing(currentConfigs, currentProxies);
+      if (updatedConfigs && updatedConfigs.length) setConfigs(updatedConfigs);
+      if (updatedProxies && updatedProxies.length) setProxies(updatedProxies);
+
       addToast({
         title: 'بروزرسانی پینگ زنده انجام شد 📶',
-        description: 'تاخیر واقعی گیت‌وی‌ها در همراه اول، ایرانسل و رایتل با موفقیت سنجیده شد.',
+        description: 'تاخیر واقعی گیت‌وی‌ها و وضعیت سوکت سرورها با موفقیت سنجیده شد و مقادیر بروزرسانی شدند.',
         type: 'info'
       });
     } catch {
