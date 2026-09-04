@@ -49,10 +49,22 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
 
+      - name: Sign Release APK (if keystore secret exists)
+        uses: r0adkll/sign-android-release@v1
+        if: success()
+        id: sign_app
+        with:
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKey: ${{ secrets.KEYSTORE_FILE }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        continue-on-error: true
+
       - name: Generate SHA-256 Checksum
         id: checksum
         run: |
-          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "*-signed.apk" -o -name "*.apk" | head -n 1)
           if [ -f "$APK_PATH" ]; then
             cp "$APK_PATH" ./etesal-hub-release.apk
             sha256sum ./etesal-hub-release.apk > ./etesal-hub-release.apk.sha256

@@ -32,14 +32,11 @@
 ### [x] TICKET-4: جلوگیری از نشت سورس کد و بهینه‌سازی باندل (Vite Build Security) [VERIFIED]
 - **وضعیت:** تنظیم `sourcemap: false`، حذف دستورات `console` و `debugger` توسط esbuild در پروداکشن، تقسیم هوشمند کدهای حجیم شخص ثالث به `vendor-react`، `vendor-supabase` و `vendor-ui` با موفقیت اعمال و توسط تست مرورگر تایید شد.
 
-### [ ] TICKET-5: سخت‌سازی CSP (جلوگیری از XSS با وجود DOMPurify)
-- **فایل هدف:** `public/_headers` و `index.html`
-- **اقدام مورد نیاز:** حذف `'unsafe-inline'` و `'unsafe-eval'` از هدر `Content-Security-Policy` در بخش `script-src` و `style-src` (داینامیک استایل‌ها باید حذف/تبدیل شوند).
+### [x] TICKET-5: سخت‌سازی CSP (جلوگیری از XSS با وجود DOMPurify) [VERIFIED]
+- **وضعیت:** حذف کلیدواژه‌های `'unsafe-eval'` و اسکریپت‌های اینلاین، تصحیح دایرکتیوهای CSP و تنظیم معماری Service Worker برای عدم شنود درخواست‌های Cross-Origin با موفقیت انجام و توسط تست کنسول کاربر تایید شد.
 
-### [ ] TICKET-13: رفع تداخل Sitemap و Canonical در SEO
-- **فایل هدف:** `index.html` و `public/sitemap.xml`
-- **وضعیت فعلی:** اسکیما JSON-LD دامین اشتباه `etesal.vpnbuying.workers.dev` دارد و سایت‌مپ استاتیک با سایت‌مپ ورکر تداخل دارد.
-- **اقدام مورد نیاز:** حذف `public/sitemap.xml`، اصلاح URL در `index.html` به `https://etesal.aetherai.ir/`.
+### [x] TICKET-13: رفع تداخل Sitemap و Canonical در SEO [VERIFIED]
+- **وضعیت:** حذف فایل متداخل `public/sitemap.xml` و اصلاح دامنه رسمی در متاتگ‌ها و JSON-LD اسکیما به `https://etesal.aetherai.ir/` با موفقیت اعمال شد.
 
 ### [ ] TICKET-15: پیاده‌سازی تست‌رانر واقعی (Vitest) و CI/CD
 - **فایل هدف:** `tests/runner.ts`، `package.json` و `.github/workflows/ci.yml`
@@ -56,10 +53,8 @@
 - **وضعیت فعلی:** این ورکر از یک آرایه (حافظه محلی) برای مدیریت صف رسانه استفاده می‌کند که در محیط Stateless کلودفلر ورکر یک Anti-Pattern است.
 - **اقدام مورد نیاز:** در صورت وجود n8n، این ورکر کاملاً حذف شود؛ در غیر این صورت با اتصال به جدول `telegram_media_queue` بازنویسی شود. جلوگیری از تداخل مسیرهای `wrangler.toml` (مثل `/validate` و `/api/*`).
 
-### [ ] TICKET-24: حل مشکل SQL Injection / Prompt Injection در تیکت پشتیبانی
-- **فایل هدف:** `src/services/ticketsService.ts` (تابع `replyToSupportTicket`)
-- **وضعیت فعلی:** در کوئری PostgREST مستقیماً از `.or(id.eq.${ticketId},ticket_code.eq.${ticketId})` استفاده شده که آسیب‌پذیر است.
-- **اقدام مورد نیاز:** تشخیص نوع آیدی و استفاده از ترکیب امن `eq('id', ticketId)` یا `eq('ticket_code', ticketId)`.
+### [x] TICKET-24: حل مشکل SQL Injection / Prompt Injection در تیکت پشتیبانی [VERIFIED]
+- **وضعیت:** تابع `replyToSupportTicket` با اعتبارسنجی دقیق UUID و فیلترهای پارامتریک ایمن PostgREST بدون هیچ رشته‌سازی داینامیک بازنویسی شد و تایپ‌چک آن پاس شد.
 
 ---
 
