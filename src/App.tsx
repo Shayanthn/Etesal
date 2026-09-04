@@ -35,8 +35,8 @@ import { NewsDetailPage } from './modules/news/NewsDetailPage';
 import { ArticleDetailPage } from './modules/articles/ArticleDetailPage';
 import { AuthModal } from './modules/auth/AuthModal';
 import { UpdatePasswordModal } from './modules/auth/UpdatePasswordModal';
-import { UserDashboard } from './modules/dashboard/UserDashboard';
 import { Suspense, lazy } from 'react';
+const UserDashboard = lazy(() => import('./modules/dashboard/UserDashboard').then(m => ({ default: m.UserDashboard })));
 const MasterAdminDashboard = lazy(() => import('./modules/admin/MasterAdminDashboard').then(m => ({ default: m.MasterAdminDashboard })));
 import { AdminRouteGuard } from './components/auth/AdminRouteGuard';
 import { ToastContainer } from './modules/feedback/ToastContainer';
@@ -322,19 +322,21 @@ export const App: React.FC = () => {
       {/* View Routing: Dashboard vs Download vs Support vs News vs Admin vs Home */}
       {currentView === 'dashboard' && currentUser ? (
         <main className="container mx-auto px-4 max-w-6xl space-y-4">
-          <UserDashboard
-            user={currentUser}
-            onLogout={handleLogout}
-            onBackToHome={() => {
-              window.history.pushState({}, '', '/');
-              setCurrentView('home');
-            }}
-            onShowToast={addToast}
-            onUpdateUser={(updatedUser) => {
-              setCurrentUser(updatedUser);
-              saveLocalSession(updatedUser);
-            }}
-          />
+          <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center p-4 dir-rtl"><div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" /></div>}>
+            <UserDashboard
+              user={currentUser}
+              onLogout={handleLogout}
+              onBackToHome={() => {
+                window.history.pushState({}, '', '/');
+                setCurrentView('home');
+              }}
+              onShowToast={addToast}
+              onUpdateUser={(updatedUser) => {
+                setCurrentUser(updatedUser);
+                saveLocalSession(updatedUser);
+              }}
+            />
+          </Suspense>
         </main>
       ) : currentView === 'admin' ? (
         <main className="container mx-auto px-4 max-w-6xl space-y-4">

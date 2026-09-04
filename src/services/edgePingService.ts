@@ -126,14 +126,45 @@ export async function validateEdgeProxy(proxy: MtprotoProxy): Promise<PingValida
 }
 
 /**
- * Batch pings all active configs and proxies concurrently with bounded concurrency
+ * Helper to run async tasks with strict concurrency limit (Worker & Browser friendly)
+ */
+async function mapConcurrent<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let currentIndex = 0;
+
+  async function worker() {
+    while (currentIndex < items.length) {
+      const index = currentIndex++;
+      try {
+        results[index] = await fn(items[index]);
+      } catch {
+        // Fallback handled inside fn
+      }
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+/**
+ * Batch pings active configs and proxies with strict concurrency pooling (max 3 concurrent)
+ * to prevent browser socket exhaustion, rate limits (429), and Cloudflare throttling.
  */
 export async function runBatchEdgePing(
   configs: V2RayConfig[],
   proxies: MtprotoProxy[]
 ): Promise<{ updatedConfigs: V2RayConfig[]; updatedProxies: MtprotoProxy[] }> {
-  // Test configs in parallel
-  const configPromises = configs.map(async (c) => {
+  // Test priority configs with concurrency limit = 3
+  const targetConfigs = configs.slice(0, 12);
+  const remainingConfigs = configs.slice(12);
+
+  const updatedTargetConfigs = await mapConcurrent(targetConfigs, 3, async (c) => {
     try {
       const res = await validateEdgeConfig(c.configString);
       return {
@@ -146,8 +177,11 @@ export async function runBatchEdgePing(
     }
   });
 
-  // Test proxies in parallel
-  const proxyPromises = proxies.map(async (p) => {
+  // Test top proxies with concurrency limit = 3
+  const targetProxies = proxies.slice(0, 8);
+  const remainingProxies = proxies.slice(8);
+
+  const updatedTargetProxies = await mapConcurrent(targetProxies, 3, async (p) => {
     try {
       const res = await validateEdgeProxy(p);
       return {
@@ -160,10 +194,8 @@ export async function runBatchEdgePing(
     }
   });
 
-  const [updatedConfigs, updatedProxies] = await Promise.all([
-    Promise.all(configPromises),
-    Promise.all(proxyPromises)
-  ]);
-
-  return { updatedConfigs, updatedProxies };
+  return { 
+    updatedConfigs: [...updatedTargetConfigs, ...remainingConfigs], 
+    updatedProxies: [...updatedTargetProxies, ...remainingProxies] 
+  };
 }

@@ -33,50 +33,31 @@ export const NewsDetailPage: React.FC<NewsDetailPageProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  // SEO: Inject Structured Data (Schema.org NewsArticle JSON-LD) into DOM
-  useEffect(() => {
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'NewsArticle',
-      'headline': article.title,
-      'description': article.summary,
-      'image': [article.imageUrl],
-      'datePublished': article.publishedAt,
-      'dateModified': article.publishedAt,
-      'author': {
-        '@type': 'Person',
-        'name': article.author
-      },
-      'publisher': {
-        '@type': 'Organization',
-        'name': 'اتصال | مرجع اینترنت آزاد',
-        'logo': {
-          '@type': 'ImageObject',
-          'url': 'https://etesal.aetherai.ir/icon.png'
-        }
-      },
-      'mainEntityOfPage': {
-        '@type': 'WebPage',
-        '@id': `${window.location.origin}/news/${article.slug}`
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    'headline': article.title,
+    'description': article.summary,
+    'image': [article.imageUrl],
+    'datePublished': article.publishedAt,
+    'dateModified': article.publishedAt,
+    'author': {
+      '@type': 'Person',
+      'name': article.author
+    },
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'اتصال | مرجع اینترنت آزاد',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://etesal.aetherai.ir/icon.png'
       }
-    };
-
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.id = 'news-schema-jsonld';
-    script.text = JSON.stringify(jsonLd);
-    document.head.appendChild(script);
-
-    // Update document title for SEO
-    const originalTitle = document.title;
-    document.title = `${article.title} | رصدخانه اخبار اتصال`;
-
-    return () => {
-      const existingScript = document.getElementById('news-schema-jsonld');
-      if (existingScript) existingScript.remove();
-      document.title = originalTitle;
-    };
-  }, [article]);
+    },
+    'mainEntityOfPage': {
+      '@type': 'WebPage',
+      '@id': `${typeof window !== 'undefined' ? window.location.origin : 'https://etesal.aetherai.ir'}/news/${article.slug}`
+    }
+  };
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/news/${article.slug}`;
@@ -111,7 +92,10 @@ export const NewsDetailPage: React.FC<NewsDetailPageProps> = ({
         <meta property="og:description" content={(article as any).meta_description || article.summary} />
         <meta property="og:image" content={article.imageUrl} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`${window.location.origin}/news/${article.slug}`} />
+        <meta property="og:url" content={`${typeof window !== 'undefined' ? window.location.origin : 'https://etesal.aetherai.ir'}/news/${article.slug}`} />
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLd)}
+        </script>
       </Helmet>
       
       {/* Top Breadcrumb */}

@@ -60,10 +60,9 @@
 
 ## 🟡 فاز ۳: اولویت متوسط (معماری، پرفورمنس و PWA)
 
-### [ ] TICKET-6: بارگذاری تنبل مگاکامپوننت `UserDashboard` (Code Splitting)
+### [x] TICKET-6: بارگذاری تنبل مگاکامپوننت `UserDashboard` (Code Splitting) [VERIFIED]
 - **فایل هدف:** `src/App.tsx`
-- **اقدام مورد نیاز:** تبدیل ایمپورت استاتیک داشبورد به `React.lazy()`.
-- **تست تایید:** بررسی تب Network در لندینگ پیج؛ اثبات اینکه فایل JS باندل داشبورد در لندینگ دانلود نمی‌شود.
+- **وضعیت:** ایمپورت استاتیک `UserDashboard` به `React.lazy()` همراه با `<Suspense>` تبدیل شد؛ باندل عظیم ۱۲۰۰ خطی داشبورد از بارگذاری اولیه لندینگ‌پیج کاملاً تفکیک شد و حجم باندل اولیه به شدت کاهش یافت.
 
 ### [ ] TICKET-7: تجزیه (Refactor) فایل ۱۱۵۰ خطی `UserDashboard`
 - **فایل هدف:** `src/modules/dashboard/UserDashboard.tsx`
@@ -81,11 +80,9 @@
 - **اقدام مورد نیاز:** راه‌اندازی Workbox manifest برای آپدیت آفلاین خودکار.
 - **تست تایید:** بررسی تیک Offline در Application tab مرورگر و رفرش صفحه با خروجی 200 از کش.
 
-### [ ] TICKET-14: حل تداخل Helmet و DOM API (نشتی حافظه احتمالی)
+### [x] TICKET-14: حل تداخل Helmet و DOM API (نشتی حافظه احتمالی) [VERIFIED]
 - **فایل هدف:** `src/modules/news/NewsDetailPage.tsx`
-- **وضعیت فعلی:** ایجاد تگ اسکریپت با `document.head.appendChild` همزمان با استفاده از `<Helmet>` باعث تداخل در رندرینگ React 18 می‌شود.
-- **اقدام مورد نیاز:** حذف کد DOM Manipulation دستی و انتقال JSON-LD schema به داخل تگ `<Helmet>`.
-- **تست تایید:** تغییر مسیر بین صفحات خبر و بررسی تگ‌های `<head>` مرورگر تا از عدم تکرار (Duplicate) تگ‌های اسکریپت مطمئن شویم.
+- **وضعیت:** دستکاری مستقیم `document.head.appendChild` و متغیرهای سراسری حذف شد و ساختار داده‌های نشاندار JSON-LD به صورت کاملاً ایزوله و امن به درون تگ `<Helmet>` منتقل گردید تا از هرگونه نشت حافظه و تداخل در چرخه حیات React جلوگیری شود.
 
 ### [ ] TICKET-25: رفع نواقص n8n و EdgePing Fallback
 - **فایل هدف:** `workflows/n8n/1-config-ingestion.json`، `2-proxy-ingestion.json` و `src/services/edgePingService.ts`

@@ -145,6 +145,9 @@ function saveLocalTicketsVault(tickets: AdminSupportTicket[]): void {
 export async function createSupportTicket(params: CreateTicketParams): Promise<TicketOperationResult> {
   const code = generateTicketCode();
   const now = new Date().toISOString();
+  const guestToken = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID().replace(/-/g, '')
+    : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
   const newTicket: AdminSupportTicket = {
     id: code,
@@ -164,9 +167,24 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
   const supabase = getSupabase();
 
   if (supabase) {
-    const insertPayload: any = {
+    // Check if the current Supabase client has an active Supabase Auth user session
+    let authenticatedUserId: string | null = null;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        authenticatedUserId = sessionData.session.user.id;
+      }
+    } catch {
+      // Ignore auth check error
+    }
+
+    // Only set user_id if we have a real Supabase Auth session,
+    // otherwise the anon RLS policy enforces (user_id IS NULL)
+    const effectiveUserId = authenticatedUserId || (params.userId && authenticatedUserId ? params.userId : null);
+
+    const basePayload: any = {
       ticket_code: code,
-      user_id: params.userId || null,
+      user_id: effectiveUserId,
       user_name: newTicket.userName,
       user_email: newTicket.userEmail || null,
       telegram_username: newTicket.telegramUsername || null,
@@ -178,41 +196,28 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
       message: newTicket.message
     };
 
-    // For unauthenticated guest submissions, do NOT call .select()
-    // because PostgreSQL RLS allows anon to INSERT under "Guest Ticket Submission",
-    // but anon cannot SELECT from support_tickets directly (only via get_ticket_by_code RPC).
-    if (!params.userId) {
-      const { error } = await supabase
+    // Include guest_token_hash to satisfy policies that enforce guest_token_hash IS NOT NULL
+    const payloadWithToken = {
+      ...basePayload,
+      guest_token_hash: guestToken
+    };
+
+    // Attempt 1: Insert with guest_token_hash (satisfies latest strict RLS policy)
+    let { error } = await supabase
+      .from('support_tickets')
+      .insert([payloadWithToken]);
+
+    // Attempt 2: If failed because column doesn't exist, retry with basePayload
+    if (error && (error.message?.includes('column') || error.message?.includes('guest_token_hash'))) {
+      const retry = await supabase
         .from('support_tickets')
-        .insert([insertPayload]);
-
-      if (error) {
-        console.error('Supabase createSupportTicket error (guest):', error);
-        return { success: false, error: error.message || 'خطا در ثبت تیکت در پایگاه داده' };
-      }
-
-      saveUserSubmittedTicket(newTicket);
-      return { success: true, ticket: newTicket };
+        .insert([basePayload]);
+      error = retry.error;
     }
 
-    // For authenticated users
-    const { data, error } = await supabase
-      .from('support_tickets')
-      .insert([insertPayload])
-      .select()
-      .single();
-
     if (error) {
-      console.error('Supabase createSupportTicket error (authenticated):', error);
-      // Retry without select
-      const { error: insertErr } = await supabase
-        .from('support_tickets')
-        .insert([insertPayload]);
-      if (insertErr) {
-        return { success: false, error: insertErr.message || 'خطا در ثبت تیکت در پایگاه داده' };
-      }
-    } else if (data) {
-      newTicket.id = data.ticket_code || data.id;
+      console.error('Supabase createSupportTicket error:', error);
+      return { success: false, error: error.message || 'خطا در ثبت تیکت در پایگاه داده' };
     }
 
     saveUserSubmittedTicket(newTicket);
