@@ -9,19 +9,17 @@ export async function calculateSha256(input: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(cleanInput);
   
-  if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+  const cryptoObj = (typeof globalThis !== 'undefined' && globalThis.crypto)
+    ? globalThis.crypto
+    : (typeof window !== 'undefined' ? window.crypto : null);
+
+  if (cryptoObj && cryptoObj.subtle) {
+    const hashBuffer = await cryptoObj.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
   
-  // Node.js fallback
-  try {
-    const cryptoModule = await import('node:crypto');
-    return cryptoModule.createHash('sha256').update(Buffer.from(data)).digest('hex');
-  } catch {
-    return '';
-  }
+  return '';
 }
 
 /**

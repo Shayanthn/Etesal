@@ -15,11 +15,6 @@ enabled = true
 [placement]
 mode = "smart"
 
-[env.production]
-name = "etesal-hub-prod"
-# Add your custom domains here
-# routes = [ { pattern = "etesal.aetherai.ir", custom_domain = true } ]
-
 # Define placeholder vars for security context
 [vars]
 ALLOWED_ORIGIN = "https://etesal.aetherai.ir"
