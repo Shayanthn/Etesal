@@ -9,16 +9,18 @@ import { connect } from 'cloudflare:sockets';
  * Handles decimal, octal (0NNN), and hex (0xNN) octet representations.
  */
 function isPrivateIP(ip: string): boolean {
-  // ── IPv4 ──
-  const parts = ip.split('.');
-  if (parts.length === 4 && !ip.includes(':')) {
-    const octets = parts.map(p => {
-      if (/^0x[0-9a-f]+$/i.test(p)) return parseInt(p, 16);     // hex
-      if (/^0[0-7]+$/.test(p) && p.length > 1) return parseInt(p, 8); // octal
-      return parseInt(p, 10);                                   // decimal
+  // STRICT IPv4 parsing: Reject any octal, hex, or short-form (e.g. 127.1).
+  // Only exact standard IPv4 formats are allowed. Fail closed otherwise.
+  if (/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(ip)) {
+    const parts = ip.split('.').map(p => {
+      // Reject octal formatting completely (e.g. 010.0.0.1)
+      if (p.length > 1 && p.startsWith('0')) return NaN;
+      return parseInt(p, 10);
     });
-    if (octets.some(o => isNaN(o) || o < 0 || o > 255)) return false;
-    const [a, b] = octets;
+    
+    if (parts.some(o => isNaN(o) || o < 0 || o > 255)) return true; // Fail closed if invalid structure
+    
+    const [a, b] = parts;
     if (a === 0) return true;                                    // 0.0.0.0/8
     if (a === 10) return true;                                   // 10.0.0.0/8
     if (a === 127) return true;                                  // 127.0.0.0/8 (loopback)
@@ -27,10 +29,12 @@ function isPrivateIP(ip: string): boolean {
     if (a === 192 && b === 168) return true;                     // 192.168.0.0/16
     if (a === 198 && (b === 18 || b === 19)) return true;        // 198.18.0.0/15 (benchmarking)
     if (a === 100 && b >= 64 && b <= 127) return true;          // 100.64.0.0/10 (CGNAT)
-    if (a === 224) return true;                                  // 224.0.0.0/4 (multicast)
-    if (a === 240) return true;                                  // 240.0.0.0/4 (reserved)
+    if (a >= 224) return true;                                   // 224+ (multicast & reserved)
     return false;
   }
+  
+  // If it doesn't match standard IPv4, maybe it's IPv6. But for SSRF, if it looks like IPv4 but fails regex, reject!
+  if (!ip.includes(':')) return true; // It's not IPv4 and not IPv6, so reject it.
 
   // ── IPv6 ──
   const lower = ip.toLowerCase();

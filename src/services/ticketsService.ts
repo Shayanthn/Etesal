@@ -86,48 +86,35 @@ export async function createSupportTicket(params: CreateTicketParams): Promise<T
   const supabase = getSupabase();
 
   if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .insert([
-          {
-            user_id: params.userId || null,
-            user_name: newTicket.userName,
-            user_email: newTicket.userEmail,
-            telegram_username: newTicket.telegramUsername,
-            subject: newTicket.subject,
-            category: newTicket.category,
-            operator: newTicket.operator,
-            priority: newTicket.priority,
-            status: newTicket.status,
-            message: newTicket.message
-          }
-        ])
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .insert([
+        {
+          user_id: params.userId || null,
+          user_name: newTicket.userName,
+          user_email: newTicket.userEmail,
+          telegram_username: newTicket.telegramUsername,
+          subject: newTicket.subject,
+          category: newTicket.category,
+          operator: newTicket.operator,
+          priority: newTicket.priority,
+          status: newTicket.status,
+          message: newTicket.message
+        }
+      ])
+      .select()
+      .single();
 
-      if (error) {
-        // If DB fails, fallback gracefully to local store with a locally generated code
-        newTicket.id = generateTicketCode();
-        const vault = getLocalTicketsVault();
-        saveLocalTicketsVault([newTicket, ...vault]);
-        return { success: true, ticket: newTicket };
-      }
-
-      if (data) {
-        newTicket.id = data.ticket_code || data.id;
-      }
-
-      // Also mirror locally for instant retrieval
-      const vault = getLocalTicketsVault();
-      saveLocalTicketsVault([newTicket, ...vault]);
-      return { success: true, ticket: newTicket };
-    } catch {
-      newTicket.id = generateTicketCode();
-      const vault = getLocalTicketsVault();
-      saveLocalTicketsVault([newTicket, ...vault]);
-      return { success: true, ticket: newTicket };
+    if (error) {
+      console.error('Supabase createSupportTicket error:', error);
+      return { success: false, error: 'خطا در ثبت تیکت: مشکل در ارتباط با سرور' };
     }
+
+    if (data) {
+      newTicket.id = data.ticket_code || data.id;
+    }
+
+    return { success: true, ticket: newTicket };
   }
 
   // Local Offline Mode
@@ -181,35 +168,35 @@ export async function fetchAllTickets(): Promise<AdminSupportTicket[]> {
   const supabase = getSupabase();
 
   if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('support_tickets')
-        .select('*')
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        const mapped: AdminSupportTicket[] = data.map((item: any) => ({
-          id: item.id || item.ticket_code,
-          subject: item.subject,
-          category: item.category || 'connection',
-          operator: item.operator || 'mci',
-          userName: item.user_name,
-          userEmail: item.user_email,
-          telegramUsername: item.telegram_username,
-          message: item.message,
-          status: item.status || 'pending',
-          priority: item.priority || 'medium',
-          replyMessage: item.reply_message,
-          repliedAt: item.replied_at,
-          createdAt: item.created_at || new Date().toISOString(),
-          updatedAt: item.updated_at || new Date().toISOString()
-        }));
-        saveLocalTicketsVault(mapped);
-        return mapped;
-      }
-    } catch {
-      // Fallback
+    if (error) {
+      console.error('Supabase fetchAllTickets error:', error);
+      return [];
     }
+    
+    if (data) {
+      return data.map((item: any) => ({
+        id: item.id || item.ticket_code,
+        subject: item.subject,
+        category: item.category || 'connection',
+        operator: item.operator || 'mci',
+        userName: item.user_name,
+        userEmail: item.user_email,
+        telegramUsername: item.telegram_username,
+        message: item.message,
+        status: item.status || 'pending',
+        priority: item.priority || 'medium',
+        replyMessage: item.reply_message,
+        repliedAt: item.replied_at,
+        createdAt: item.created_at || new Date().toISOString(),
+        updatedAt: item.updated_at || new Date().toISOString()
+      }));
+    }
+    return [];
   }
 
   return getLocalTicketsVault();
@@ -227,19 +214,21 @@ export async function replyToSupportTicket(
   const supabase = getSupabase();
 
   if (supabase) {
-    try {
-      await supabase
-        .from('support_tickets')
-        .update({
-          reply_message: replyText.trim(),
-          replied_at: now,
-          status: newStatus,
-          updated_at: now
-        })
-        .or(`id.eq.${ticketId},ticket_code.eq.${ticketId}`);
-    } catch {
-      // Ignore background sync error
+    const { error } = await supabase
+      .from('support_tickets')
+      .update({
+        reply_message: replyText.trim(),
+        replied_at: now,
+        status: newStatus,
+        updated_at: now
+      })
+      .or(`id.eq.${ticketId},ticket_code.eq.${ticketId}`);
+      
+    if (error) {
+      console.error('Supabase replyToSupportTicket error:', error);
+      throw new Error('عدم دسترسی یا خطای پایگاه داده.');
     }
+    return { success: true };
   }
 
   // Update local vault

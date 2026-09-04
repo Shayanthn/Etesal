@@ -212,7 +212,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   };
 
   // خرید کانفیگ اختصاصی
-  const handleBuyDedicatedConfig = (product: DedicatedConfigProduct) => {
+  const handleBuyDedicatedConfig = async (product: DedicatedConfigProduct) => {
     if (walletBalance < product.priceTomans) {
       setDepositAmount(product.priceTomans - walletBalance);
       setShowTopUpModal(true);
@@ -224,7 +224,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       return;
     }
 
-    const result = purchaseDedicatedConfig(user, product);
+    const result = await purchaseDedicatedConfig(user, product);
+
     if (result.success && result.updatedUser) {
       if (onUpdateUser) {
         onUpdateUser(result.updatedUser);

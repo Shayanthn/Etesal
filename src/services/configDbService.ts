@@ -10,33 +10,35 @@ const LOCAL_PROXIES_KEY = 'etesal_proxies_vault';
 export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
   const supabase = getSupabase();
   if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('configs')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('configs')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return data.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          protocol: item.protocol,
-          configString: item.config_string,
-          operator: item.operator || 'all',
-          ping: item.ping || 45,
-          location: item.location || 'سرور بین‌المللی اختصاصی',
-          flag: item.flag || '⚡',
-          quality: item.quality || 'excellent',
-          tlsType: item.protocol === 'hysteria2' ? 'quic/tls' : 'reality',
-          transport: item.protocol === 'hysteria2' ? 'udp' : 'tcp',
-          verifiedAt: 'لحظاتی پیش',
-          isOfficial: item.is_official ?? true
-        }));
-      }
-    } catch {
-      // Fallback
+    if (error) {
+      console.error('Supabase fetchLiveConfigs error:', error);
+      return [];
     }
+
+    if (data) {
+      return data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        protocol: item.protocol,
+        configString: item.config_string,
+        operator: item.operator || 'all',
+        ping: item.ping || 45,
+        location: item.location || 'سرور بین‌المللی اختصاصی',
+        flag: item.flag || '⚡',
+        quality: item.quality || 'excellent',
+        tlsType: item.protocol === 'hysteria2' ? 'quic/tls' : 'reality',
+        transport: item.protocol === 'hysteria2' ? 'udp' : 'tcp',
+        verifiedAt: 'لحظاتی پیش',
+        isOfficial: item.is_official ?? true
+      }));
+    }
+    return [];
   }
 
   // Local fallback
@@ -46,7 +48,6 @@ export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
   } catch {
     // Ignore
   }
-
   return [];
 }
 
@@ -56,30 +57,32 @@ export async function fetchLiveConfigs(): Promise<V2RayConfig[]> {
 export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
   const supabase = getSupabase();
   if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('proxies')
-        .select('*')
-        .eq('is_active', true)
-        .order('ping', { ascending: true });
+    const { data, error } = await supabase
+      .from('proxies')
+      .select('*')
+      .eq('is_active', true)
+      .order('ping', { ascending: true });
 
-      if (!error && data && data.length > 0) {
-        return data.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          host: item.host,
-          port: item.port,
-          secret: item.secret,
-          ping: item.ping || 35,
-          location: item.location || 'سرور بین‌المللی اختصاصی',
-          flag: item.flag || '⚡',
-          verifiedAt: 'لحظاتی پیش',
-          isVip: false
-        }));
-      }
-    } catch {
-      // Fallback
+    if (error) {
+      console.error('Supabase fetchLiveProxies error:', error);
+      return [];
     }
+
+    if (data) {
+      return data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        host: item.host,
+        port: item.port,
+        secret: item.secret,
+        ping: item.ping || 35,
+        location: item.location || 'سرور بین‌المللی اختصاصی',
+        flag: item.flag || '⚡',
+        verifiedAt: 'لحظاتی پیش',
+        isVip: false
+      }));
+    }
+    return [];
   }
 
   try {
@@ -98,24 +101,27 @@ export async function fetchLiveProxies(): Promise<MtprotoProxy[]> {
 export async function saveConfigsBatch(configs: V2RayConfig[]): Promise<boolean> {
   const supabase = getSupabase();
   if (supabase) {
-    try {
-      const dbPayload = configs.map(c => ({
-        name: c.name,
-        protocol: c.protocol,
-        config_string: c.configString,
-        operator: c.operator,
-        ping: c.ping,
-        location: c.location,
-        flag: c.flag,
-        quality: c.quality,
-        is_official: c.isOfficial ?? true,
-        is_active: true
-      }));
-
-      await supabase.from('configs').upsert(dbPayload, { onConflict: 'config_string' });
-    } catch {
-      // Fallback
+    const dbPayload = configs.map(c => ({
+      name: c.name,
+      protocol: c.protocol,
+      config_string: c.configString,
+      operator: c.operator,
+      ping: c.ping,
+      location: c.location,
+      flag: c.flag,
+      quality: c.quality,
+      is_official: c.isOfficial ?? true,
+      is_active: true
+    }));
+    
+    const { error } = await supabase.from('configs').upsert(dbPayload, { onConflict: 'config_string' });
+    
+    if (error) {
+      console.error("Supabase saveConfigsBatch error:", error);
+      throw new Error('خطا در ذخیره‌سازی: عدم دسترسی کافی یا مشکل ارتباط با پایگاه داده.');
     }
+    
+    return true; // Stop here, do not save to local storage if DB is active
   }
 
   try {

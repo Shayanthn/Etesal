@@ -1,3 +1,4 @@
+import { getSupabase } from './supabaseClient';
 import { DedicatedConfigProduct, WalletTransaction, User } from '../types';
 
 export const DEDICATED_CONFIG_PRODUCTS: DedicatedConfigProduct[] = [
@@ -54,88 +55,61 @@ export const DEDICATED_CONFIG_PRODUCTS: DedicatedConfigProduct[] = [
   }
 ];
 
-export const INITIAL_TRANSACTIONS: WalletTransaction[] = [
-  {
-    id: 'tx-gift-welcome',
-    type: 'gift',
-    amount: 15000,
-    description: 'هدیه خوش‌آمدگویی عضویت در خانواده اتصال',
-    status: 'completed',
-    date: 'امروز - لحظاتی پیش',
-    referenceId: 'GIFT-ETESAL-2026'
-  }
-];
+export const INITIAL_TRANSACTIONS: WalletTransaction[] = [];
 
 /**
  * ایجاد تراکنش افزایش موجودی (شارژ)
- * ⚠️ WARNING: In V7.1 Database Schema, client-side INSERT to wallet_transactions is BLOCKED by RLS.
- * This function currently acts as a local mock. In a production environment, this must be 
- * handled via a secure backend webhook using the service_role key.
+ * ⚠️ در محیط واقعی این بخش باید از طریق درگاه پرداخت و Webhook سرور هندل شود
  */
-export function createDepositTransaction(amount: number, referenceId: string): WalletTransaction {
-  return {
-    id: `tx-dep-${Date.now()}`,
-    type: 'deposit',
-    amount,
-    description: `افزایش موجودی کیف پول (کد پیگیری: ${referenceId})`,
-    status: 'completed',
-    date: 'هم‌اکنون',
-    referenceId
-  };
+export async function createDepositTransaction(amount: number, referenceId: string): Promise<{ success: boolean; error?: string }> {
+  // This should ideally call a Supabase edge function for payments
+  return { success: false, error: 'شارژ کیف پول موقتاً غیرفعال است. با پشتیبانی تماس بگیرید.' };
 }
 
 /**
- * خرید کانفیگ اختصاصی با کسر از کیف پول
- * ⚠️ WARNING: RLS blocks client inserts for transactions. This is a local simulation.
- * Real purchases must be handled on a secure backend that verifies balance and updates subscription via service_role.
+ * خرید کانفیگ اختصاصی با کسر از کیف پول (اتصال واقعی به دیتابیس با RPC)
  */
-export function purchaseDedicatedConfig(
+export async function purchaseDedicatedConfig(
   user: User,
   product: DedicatedConfigProduct
-): { success: boolean; updatedUser?: User; error?: string; transaction?: WalletTransaction } {
-  if (user.walletBalance < product.priceTomans) {
-    const shortage = product.priceTomans - user.walletBalance;
-    return {
-      success: false,
-      error: `موجودی کیف پول شما کافی نیست. لطفا حداقل ${shortage.toLocaleString('fa-IR')} تومان حساب خود را شارژ کنید.`
-    };
-  }
+): Promise<{ success: boolean; updatedUser?: User; error?: string }> {
+  try {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error('Supabase Client not configured');
 
-  const newBalance = user.walletBalance - product.priceTomans;
-  const newTx: WalletTransaction = {
-    id: `tx-buy-${Date.now()}`,
-    type: 'purchase',
-    amount: product.priceTomans,
-    description: `خرید ${product.title}`,
-    status: 'completed',
-    date: 'هم‌اکنون',
-    referenceId: `ET-${Date.now().toString().slice(-6)}`
-  };
+    // فراخوانی RPC اتمیک برای ثبت امن خرید در بک‌اند
+    const { data, error } = await supabase.rpc('purchase_dedicated_config', {
+      p_plan_id: product.id
+    });
 
-  const updatedTransactions = [newTx, ...(user.transactions || [])];
-
-  // تولید لینک سابسکریپشن اختصاصی
-  const uniqueSubKey = `vip_${user.username}_${Date.now().toString(36)}`;
-  const dedicatedSubUrl = `https://etesal.aetherai.ir/api/sub/${uniqueSubKey}?token=${Date.now()}`;
-
-  const updatedUser: User = {
-    ...user,
-    role: 'vip',
-    walletBalance: newBalance,
-    transactions: updatedTransactions,
-    subscription: {
-      ...user.subscription,
-      planName: product.title,
-      totalTrafficGB: (user.subscription.totalTrafficGB || 0) + product.trafficGB,
-      daysRemaining: (user.subscription.daysRemaining || 0) + product.durationDays,
-      status: 'active',
-      subscriptionUrl: dedicatedSubUrl
+    if (error) {
+      console.error('RPC Error purchasing config:', error);
+      return { success: false, error: error.message };
     }
-  };
 
-  return {
-    success: true,
-    updatedUser,
-    transaction: newTx
-  };
+    if (data && data.success) {
+      // Return the updated data directly from the server response
+      // NOTE: We don't get the full subscription object, just the new balance, url and token.
+      
+      const updatedUser: User = {
+        ...user,
+        role: data.new_role ?? user.role,
+        walletBalance: data.new_balance,
+        subscription: {
+          planName: product.title,
+          totalTrafficGB: product.trafficGB,
+          daysRemaining: product.durationDays,
+          status: 'active',
+          subscriptionUrl: data.subscription_url
+        }
+      };
+
+      return { success: true, updatedUser };
+    }
+
+    return { success: false, error: 'خطای ناشناخته در پردازش خرید' };
+  } catch (err: any) {
+    console.error('Exception purchasing config:', err);
+    return { success: false, error: 'خطا در ارتباط با سرور' };
+  }
 }
