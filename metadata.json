@@ -1,6 +1,6 @@
 {
   "name": "اتصال | Etesal Hub",
-  "description": "پورتال هوشمند ارتباطات ابری، کانفیگ‌های تست‌شده شبکه و سرورهای امن اختصاصی",
+  "description": "پورتال هوشمند ضد فیلتر، کانفیگ‌های تست‌شده Reality و پروکسی‌های تلگرام",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

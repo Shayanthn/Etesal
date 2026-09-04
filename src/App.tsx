@@ -233,16 +233,19 @@ export const App: React.FC = () => {
   const handleRefreshPing = async () => {
     setIsTestingPing(true);
     try {
-      const currentConfigs = configs.length ? configs : await fetchLiveConfigs();
-      const currentProxies = proxies.length ? proxies : await fetchLiveProxies();
+      // Fetch fresh live configs and proxies from Supabase (populated by n8n workflow)
+      const freshConfigs = await fetchLiveConfigs();
+      const freshProxies = await fetchLiveProxies();
+      const currentConfigs = freshConfigs.length ? freshConfigs : configs;
+      const currentProxies = freshProxies.length ? freshProxies : proxies;
 
       const { updatedConfigs, updatedProxies } = await runBatchEdgePing(currentConfigs, currentProxies);
       if (updatedConfigs && updatedConfigs.length) setConfigs(updatedConfigs);
       if (updatedProxies && updatedProxies.length) setProxies(updatedProxies);
 
       addToast({
-        title: 'بروزرسانی پینگ زنده انجام شد 📶',
-        description: 'تاخیر واقعی گیت‌وی‌ها و وضعیت سوکت سرورها با موفقیت سنجیده شد و مقادیر بروزرسانی شدند.',
+        title: 'بروزرسانی نودها و پینگ زنده 📶',
+        description: 'آخرین کانفیگ‌ها و پروکسی‌های ثبت‌شده دریافت و وضعیت سرورها بروزرسانی شد.',
         type: 'info'
       });
     } catch {

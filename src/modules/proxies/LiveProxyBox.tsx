@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { MtprotoProxy } from '../../types';
 import { 
   Send, 
@@ -26,6 +26,22 @@ export const LiveProxyBox: React.FC<LiveProxyBoxProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [testingCardId, setTestingCardId] = useState<string | null>(null);
   const [customPings, setCustomPings] = useState<Record<string, number>>({});
+  const [rotationIndex, setRotationIndex] = useState(0);
+
+  const displayedProxies = useMemo(() => {
+    if (proxies.length <= 6) return proxies;
+    const start = (rotationIndex * 6) % proxies.length;
+    let slice = proxies.slice(start, start + 6);
+    if (slice.length < 6) {
+      slice = [...slice, ...proxies.slice(0, 6 - slice.length)];
+    }
+    return slice;
+  }, [proxies, rotationIndex]);
+
+  const handleRefreshAndCycle = () => {
+    setRotationIndex(prev => prev + 1);
+    onRefreshPing();
+  };
 
   const handleCopy = (prx: MtprotoProxy) => {
     const url = getProxyUrl(prx);
@@ -64,18 +80,30 @@ export const LiveProxyBox: React.FC<LiveProxyBoxProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              اتصال مستقیم و پرسرعت بدون قطعی، رمزنگاری ترافیک با پورت استاندارد ۴۴۳ HTTPS
+              اتصال مستقیم و پرسرعت بدون قطعی، همگام با دیتابیس زنده و نودهای استخراج‌شده
             </p>
           </div>
 
-          <button
-            onClick={onRefreshPing}
-            disabled={isTestingPing}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer self-start md:self-auto disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isTestingPing ? 'animate-spin text-cyan-400' : ''}`} />
-            <span>{isTestingPing ? 'بررسی اتصال...' : 'پایش مجدد پروکسی‌ها'}</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+            {proxies.length > 6 && (
+              <button
+                type="button"
+                onClick={() => setRotationIndex(prev => prev + 1)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-950/70 hover:bg-cyan-900/90 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition-all cursor-pointer"
+              >
+                <span>نودهای بعدی ({proxies.length} پروکسی فعال)</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleRefreshAndCycle}
+              disabled={isTestingPing}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isTestingPing ? 'animate-spin text-cyan-400' : ''}`} />
+              <span>{isTestingPing ? 'دریافت آخرین نودها...' : 'پایش و دریافت از دیتابیس'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Proxies Grid */}
@@ -87,7 +115,7 @@ export const LiveProxyBox: React.FC<LiveProxyBoxProps> = ({
               پروکسی‌های MTProto به صورت مداوم تست و پالایش می‌شوند. روی دکمه پایش کلیک کنید تا نودهای تازه بارگذاری شوند.
             </p>
             <button
-              onClick={onRefreshPing}
+              onClick={handleRefreshAndCycle}
               disabled={isTestingPing}
               className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-200 text-xs font-bold border border-cyan-500/40 cursor-pointer"
             >
@@ -97,7 +125,7 @@ export const LiveProxyBox: React.FC<LiveProxyBoxProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-6">
-            {proxies.slice(0, 6).map(prx => {
+            {displayedProxies.map(prx => {
               const country = getCountryDisplay(prx.location, prx.name, prx.flag);
               const livePing = customPings[prx.id] || (prx.ping > 0 ? prx.ping : 38);
               const isSingleTesting = testingCardId === prx.id;
