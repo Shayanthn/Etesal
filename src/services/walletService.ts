@@ -98,9 +98,13 @@ export async function purchaseDedicatedConfig(
         subscription: {
           planName: product.title,
           totalTrafficGB: product.trafficGB,
+          usedTrafficGB: 0,
+          expireDate: new Date(Date.now() + product.durationDays * 24 * 60 * 60 * 1000).toISOString(),
           daysRemaining: product.durationDays,
           status: 'active',
-          subscriptionUrl: data.subscription_url
+          subscriptionUrl: data.subscription_url,
+          dailyUsage: [],
+          speedLimitMbps: 0
         }
       };
 
