@@ -95,7 +95,7 @@ export const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children, onEx
       <div className="absolute top-1/4 -right-32 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 -left-32 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-xl relative z-10">
+      <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto overscroll-contain my-auto bg-slate-900/90 border border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 shadow-2xl backdrop-blur-xl relative z-10">
         <div className="text-center mb-6">
           <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto mb-4 text-rose-400">
             <ShieldAlert className="w-8 h-8" />

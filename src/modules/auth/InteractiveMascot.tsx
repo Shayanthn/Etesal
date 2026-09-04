@@ -31,8 +31,8 @@ export const InteractiveMascot: React.FC<MascotState> = ({
   return (
     <div className="flex flex-col items-center justify-center select-none">
       {/* Speech Bubble / Mascot Mood Quote */}
-      <div className="relative mb-1 sm:mb-2 transition-all duration-300 max-w-[270px] sm:max-w-xs">
-        <div className={`px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-bold text-center border shadow-lg backdrop-blur-md transition-all duration-300 ${
+      <div className="relative mb-1 transition-all duration-300 max-w-[210px] sm:max-w-xs">
+        <div className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-xl text-[10px] sm:text-xs font-bold text-center border shadow-lg backdrop-blur-md transition-all duration-300 ${
           isError 
             ? 'bg-rose-950/80 text-rose-300 border-rose-500/40 animate-bounce' 
             : isSuccess 
@@ -49,7 +49,7 @@ export const InteractiveMascot: React.FC<MascotState> = ({
             isPasswordMode && !isPeeking ? 'چشمامو بستم، خیالت راحت نگات نمی‌کنم! 🙈' :
             isPeeking ? 'دزدکی دارم چک می‌کنم رمزو درست زدی؟ 👀' :
             isSubmitting ? 'در حال برقراری هندشیک امن با سرور... ⏳' :
-            'سلام جیگر! مشخصاتت رو دقیق بنویس تا چشمام دنبالت کنه ✨'
+            'سلام جیگر! مشخصاتت رو بنویس تا چشمام دنبالت کنه ✨'
           )}
         </div>
         {/* Tail */}
@@ -62,7 +62,7 @@ export const InteractiveMascot: React.FC<MascotState> = ({
       </div>
 
       {/* Interactive Mascot SVG Canvas */}
-      <div className={`w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 relative transition-transform duration-300 ${isError ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
+      <div className={`w-11 h-11 sm:w-16 sm:h-16 md:w-20 md:h-20 relative transition-transform duration-300 ${isError ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
         <svg 
           viewBox="0 0 200 200" 
           className="w-full h-full drop-shadow-2xl overflow-visible"

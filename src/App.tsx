@@ -290,29 +290,7 @@ export const App: React.FC = () => {
     return <LoadingScreen />;
   }
 
-  // 404 View
-  if (currentView === '404') {
-    return (
-      <div className="min-h-screen bg-[#080a0f] text-slate-100 selection:bg-purple-500 selection:text-white flex flex-col justify-between">
-        <Header
-          language={language}
-          currentUser={currentUser}
-          currentView={currentView}
-          onToggleLanguage={handleToggleLanguage}
-          onOpenApkModal={() => setIsApkModalOpen(true)}
-          onOpenAuthModal={handleOpenAuth}
-          onNavigate={view => setCurrentView(view)}
-        />
-        <NotFoundPage onGoHome={() => {
-          window.history.pushState({}, '', '/');
-          setCurrentView('home');
-        }} />
-        <Footer />
-        <ToastContainer toasts={toasts} onDismiss={removeToast} />
-      </div>
-    );
-  }
-
+  // Main Layout & Modals
   return (
     <div className="min-h-screen bg-[#080a0f] text-slate-100 selection:bg-purple-500 selection:text-white flex flex-col justify-between">
       
@@ -351,8 +329,13 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* View Routing: Dashboard vs Download vs Support vs News vs Admin vs Home */}
-      {currentView === 'dashboard' && currentUser ? (
+      {/* View Routing: 404 vs Dashboard vs Download vs Support vs News vs Admin vs Home */}
+      {currentView === '404' ? (
+        <NotFoundPage onGoHome={() => {
+          window.history.pushState({}, '', '/');
+          setCurrentView('home');
+        }} />
+      ) : currentView === 'dashboard' && currentUser ? (
         <main className="container mx-auto px-4 max-w-6xl space-y-4">
           <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center p-4 dir-rtl"><div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" /></div>}>
             <UserDashboard

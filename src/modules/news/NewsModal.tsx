@@ -29,12 +29,12 @@ export const NewsModal: React.FC<NewsModalProps> = ({ news, onClose }) => {
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
-      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 md:p-6">
+      <div className="flex min-h-[100dvh] w-full items-start sm:items-center justify-center p-3 sm:p-6 py-6 sm:py-8">
         <div 
-          className="relative w-full max-w-xl rounded-3xl bg-slate-900 border border-slate-700/80 p-5 sm:p-6 shadow-2xl text-slate-100 my-4 sm:my-8 overflow-hidden"
+          className="relative w-full max-w-xl m-auto rounded-2xl sm:rounded-3xl bg-slate-900 border border-slate-700/80 p-4 sm:p-6 shadow-2xl text-slate-100 overflow-hidden"
           onClick={e => e.stopPropagation()}
         >
           {/* Close Button */}
